@@ -124,8 +124,15 @@ def _unrecognised_section(analysis: Analysis, top: int) -> list[str]:
     for group in shown:
         name = f"{group.provider} {group.event_id} ({group.level.label})"
         count = _times(group.count)
-        gap = max(2, WIDTH - 4 - len(name) - len(count))
-        lines.append(f"  - {name}{' ' * gap}{count}")
+        gap = WIDTH - 4 - len(name) - len(count)
+        if gap >= 2:
+            lines.append(f"  - {name}{' ' * gap}{count}")
+        else:
+            # Provider names come from the log and can be very long.
+            lines += textwrap.wrap(
+                name, width=WIDTH, initial_indent="  - ", subsequent_indent="    "
+            )
+            lines.append(f"{count:>{WIDTH}}")
     lines.append("")
     return lines
 

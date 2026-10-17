@@ -93,6 +93,26 @@ def test_invalid_xml_raises_source_error():
         parse_events_xml("<Event><System>")
 
 
+def test_xml_that_is_neither_utf8_nor_utf16_raises_source_error(tmp_path):
+    path = tmp_path / "truncated.xml"
+    # Invalid UTF-8, and an odd number of bytes is invalid UTF-16.
+    path.write_bytes(b"\xff\xfe<\x00E\x00\xff")
+    with pytest.raises(SourceError, match="not a UTF-8 or UTF-16 text file"):
+        read_file(path)
+
+
+def test_unreadable_xml_raises_source_error(tmp_path, monkeypatch):
+    path = tmp_path / "locked.xml"
+    path.write_text("<Events/>")
+
+    def deny(self):
+        raise PermissionError("Permission denied")
+
+    monkeypatch.setattr(Path, "read_bytes", deny)
+    with pytest.raises(SourceError, match="Could not read"):
+        read_file(path)
+
+
 def test_utf16_xml_export(tmp_path):
     path = tmp_path / "export.xml"
     path.write_text(SAMPLE_XML.read_text(encoding="utf-8"), encoding="utf-16")

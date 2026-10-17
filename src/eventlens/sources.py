@@ -182,10 +182,17 @@ def read_file(path: Path) -> list[Event]:
     if path.suffix.lower() == ".evtx":
         return read_evtx(path)
     try:
-        text = path.read_text(encoding="utf-8-sig")
+        raw = path.read_bytes()
+    except OSError as exc:
+        raise SourceError(f"Could not read {path}: {exc}") from exc
+    try:
+        text = raw.decode("utf-8-sig")
     except UnicodeDecodeError:
         # Event Viewer sometimes saves XML as UTF-16.
-        text = path.read_text(encoding="utf-16")
+        try:
+            text = raw.decode("utf-16")
+        except UnicodeDecodeError as exc:
+            raise SourceError(f"{path} is not a UTF-8 or UTF-16 text file") from exc
     return parse_events_xml(text)
 
 

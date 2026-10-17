@@ -69,6 +69,15 @@ def test_unrecognised_list_respects_top(make_event):
     assert text.count("(Error)") == 2
 
 
+def test_long_unrecognised_provider_names_wrap(make_event):
+    provider = "Microsoft-Windows-" + "VeryLongComponentName-" * 4 + "Provider"
+    text = render(analyze([make_event(provider, 404)]), utc=True)
+    lines = text.splitlines()
+    assert all(len(line) <= WIDTH for line in lines)
+    assert lines[-1] == f"{'1 time':>{WIDTH}}"
+    assert "404 (Error)" in lines[-2]
+
+
 def test_verbose_shows_latest_event(make_event):
     events = [make_event("Display", 4101, data={"param1": "nvlddmkm"})]
     assert "Latest event:" not in render(analyze(events), utc=True)

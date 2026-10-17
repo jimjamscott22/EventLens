@@ -97,6 +97,9 @@ def _dotnet_crash(event: Event) -> str | None:
 
 
 def _service(event: Event) -> str | None:
+    # 7009 puts the timeout in param1 and the service name in param2.
+    if event.event_id == 7009:
+        return field(event, "param2")
     return field(event, "param1")
 
 

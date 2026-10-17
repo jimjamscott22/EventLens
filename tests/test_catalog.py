@@ -164,3 +164,10 @@ def test_planned_restart_detail(make_event):
 def test_service_detail(make_event):
     event = make_event("Service Control Manager", 7031, data={"param1": "Print Spooler"})
     assert detail_for(event) == "Print Spooler"
+
+
+def test_service_timeout_detail_uses_second_field(make_event):
+    event = make_event(
+        "Service Control Manager", 7009, data={"param1": "30000", "param2": "Print Spooler"}
+    )
+    assert detail_for(event) == "Print Spooler"
