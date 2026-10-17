@@ -1,6 +1,8 @@
 # EventLens
 EventLens is a Python command-line tool that reads Windows event logs and power diagnostics and turns them into a plain-English report of what went wrong on a machine.
 
+See [SPEC.md](SPEC.md) for the design, the v1 scope, and the roadmap.
+
 ## Supported inputs
 
 | Input | Windows | macOS / Linux |
