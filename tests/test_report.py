@@ -78,6 +78,26 @@ def test_long_unrecognised_provider_names_wrap(make_event):
     assert "404 (Error)" in lines[-2]
 
 
+def test_long_values_from_the_log_never_exceed_the_width(make_event):
+    long_name = "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational"
+    events = [
+        make_event(
+            "Application Error",
+            1000,
+            channel=long_name,
+            computer="WORKSTATION-" + "X" * 70 + ".corp.example.com",
+            data={"param1": "a" * 120 + ".exe", "param4": "module-" * 20},
+        ),
+        make_event("Display", 4101, channel="Microsoft-Windows-Kernel-PnP/Configuration"),
+        make_event("User32", 1074, level=Level.INFORMATION, data={"param1": "b" * 100}),
+        make_event("x" * 120, 1, channel="Microsoft-Windows-Diagnostics-Performance/Operational"),
+    ]
+    text = render(analyze(events), utc=True, verbose=True)
+    for line in text.splitlines():
+        assert len(line) <= WIDTH, line
+    assert "Logs: Microsoft-Windows-Diagnostics-Performance/Operational," in text
+
+
 def test_verbose_shows_latest_event(make_event):
     events = [make_event("Display", 4101, data={"param1": "nvlddmkm"})]
     assert "Latest event:" not in render(analyze(events), utc=True)

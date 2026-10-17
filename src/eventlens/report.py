@@ -38,6 +38,13 @@ def _times(count: int) -> str:
     return "1 time" if count == 1 else f"{count:,} times"
 
 
+def _wrap(text: str, indent: int = 0) -> list[str]:
+    """Wrap a line that may contain values from the log, such as channel names."""
+    return textwrap.wrap(
+        text, width=WIDTH, subsequent_indent=" " * indent, break_on_hyphens=False
+    )
+
+
 def _labelled(label: str, text: str) -> list[str]:
     """Wrap ``text`` in a column next to ``label``."""
     return textwrap.wrap(
@@ -149,7 +156,7 @@ def _computer_text(computers: list[str]) -> str:
 def render(analysis: Analysis, top: int = 10, utc: bool = False, verbose: bool = False) -> str:
     """Return the full report as a string ending in a newline."""
     clock = Clock(utc)
-    lines = [f"EventLens report for {_computer_text(analysis.computers)}"]
+    lines = _wrap(f"EventLens report for {_computer_text(analysis.computers)}", indent=4)
 
     if analysis.start is None or analysis.end is None:
         if analysis.events_read:
@@ -164,13 +171,13 @@ def render(analysis: Analysis, top: int = 10, utc: bool = False, verbose: bool =
         f"{clock.long(analysis.start)} to {clock.long(analysis.end)} "
         f"({clock.zone(analysis.end)})"
     )
+    lines += _wrap(f"Logs: {logs}", indent=len("Logs: "))
     lines += [
-        f"Logs: {logs}",
         f"Period: {period}",
         f"Events read: {analysis.events_read:,} ({analysis.events_in_window:,} in this period)",
         "",
         f"Verdict: {analysis.verdict}",
-        analysis.headline,
+        *_wrap(analysis.headline),
         "",
     ]
     for finding in analysis.problems:
