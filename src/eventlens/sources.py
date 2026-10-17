@@ -1,7 +1,12 @@
-"""Read events from exported XML files or live from Windows via wevtutil."""
+"""Read events from exported log files, or live from Windows via wevtutil.
+
+Exported files (.evtx and .xml) can be read on any platform. Live log
+channels can only be queried on Windows.
+"""
 
 from __future__ import annotations
 
+import logging
 import re
 import shutil
 import subprocess
@@ -10,7 +15,11 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 
+from evtx import PyEvtxParser
+
 from eventlens.models import Event, Level
+
+logger = logging.getLogger(__name__)
 
 NS = {"e": "http://schemas.microsoft.com/win/2004/08/events/event"}
 
@@ -114,7 +123,7 @@ def _run_wevtutil(args: list[str]) -> str:
     if exe is None:
         raise SourceError(
             "wevtutil was not found. Live reading only works on Windows; "
-            "use --file with an exported .xml log instead."
+            "use --file with an exported .evtx or .xml log instead."
         )
     result = subprocess.run(
         [exe, *args],
@@ -130,15 +139,48 @@ def _run_wevtutil(args: list[str]) -> str:
     return result.stdout
 
 
+def read_evtx(path: Path) -> list[Event]:
+    """Read a binary .evtx log file. Works on Windows, macOS, and Linux.
+
+    Records that cannot be decoded (for example from a damaged file) are
+    skipped and counted rather than stopping the whole read.
+
+    The .evtx format stores event data but not the human-readable message
+    text, which Windows builds from provider DLLs at display time, so
+    ``Event.message`` is empty for events read this way.
+    """
+    try:
+        parser = PyEvtxParser(str(path))
+    except (OSError, RuntimeError) as exc:
+        raise SourceError(f"{path} is not a readable .evtx file: {exc}") from exc
+
+    events: list[Event] = []
+    skipped = 0
+    records = parser.records()
+    while True:
+        try:
+            record = next(records)
+        except StopIteration:
+            break
+        except RuntimeError:
+            skipped += 1
+            continue
+        try:
+            events.extend(parse_events_xml(record["data"]))
+        except SourceError:
+            skipped += 1
+
+    if skipped:
+        logger.warning("Skipped %d unreadable record(s) in %s", skipped, path)
+    return events
+
+
 def read_file(path: Path) -> list[Event]:
-    """Read events from an exported log file (.xml, or .evtx on Windows)."""
-    if not path.exists():
+    """Read events from an exported log file (.evtx or .xml) on any platform."""
+    if not path.is_file():
         raise SourceError(f"File not found: {path}")
     if path.suffix.lower() == ".evtx":
-        output = _run_wevtutil(
-            ["qe", str(path), "/lf:true", "/f:RenderedXml", "/e:Events"]
-        )
-        return parse_events_xml(output)
+        return read_evtx(path)
     try:
         text = path.read_text(encoding="utf-8-sig")
     except UnicodeDecodeError:
@@ -152,7 +194,7 @@ def read_live(channel: str, days: int, max_events: int) -> list[Event]:
     if sys.platform != "win32":
         raise SourceError(
             "Reading live event logs only works on Windows. "
-            "Use --file to analyse an exported .xml log on this machine."
+            "Use --file to analyse an exported .evtx or .xml log instead."
         )
     milliseconds = days * 24 * 60 * 60 * 1000
     query = f"*[System[TimeCreated[timediff(@SystemTime) <= {milliseconds}]]]"
