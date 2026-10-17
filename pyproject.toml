@@ -9,7 +9,7 @@ dependencies = [
 ]
 
 [project.scripts]
-eventlens = "eventlens:main"
+eventlens = "eventlens.cli:main"
 
 [build-system]
 requires = ["uv_build>=0.11.32,<0.12.0"]
@@ -18,7 +18,16 @@ build-backend = "uv_build"
 [dependency-groups]
 dev = [
     "pytest>=9.1.1",
+    "ruff>=0.17.1",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# Keep timezone.utc: it reads clearly and works on every supported Python.
+ignore = ["UP017"]

@@ -1,6 +1,6 @@
 # EventLens specification
 
-Status: **draft for review**. Version: v1 (milestone M1).
+Status: **agreed**. v1 (milestone M1) is implemented.
 
 ## 1. What EventLens is
 
@@ -116,7 +116,11 @@ The report opens with one line based on the most severe finding:
 | Medium or Low | "Minor issues found." |
 | Info or none | "No significant problems found." |
 
-The verdict is followed by a one-sentence headline built from the top finding, for example "This PC crashed 3 times in the last 7 days."
+The verdict is followed by a one-sentence headline:
+
+- If there were crash incidents: "This PC shut down unexpectedly 4 times, including 3 blue screen crashes."
+- Otherwise, the top problem: "Top issue: app crashed (6 times)."
+- If there are no problems: "Nothing in these logs needs attention."
 
 ## 5. Crash incidents
 
@@ -189,60 +193,52 @@ Kernel-Power 41 stores the code in decimal (`159`) and 1001 stores it as text (`
 
 ## 7. Report format
 
-Plain text, about 80 columns wide, readable when pasted into an email or ticket. No colour in v1 (planned for M2).
+Plain text, at most 75 columns wide, readable when pasted into an email or ticket. No colour in v1 (planned for M2).
 
-Sample, from a week with three blue screens, a flaky app, and a failed update:
+Sample, abbreviated from the report for [`examples/sample_week.xml`](examples/sample_week.xml), a made-up week on a troubled PC. The full output is in [`tests/fixtures/sample_week_report.txt`](tests/fixtures/sample_week_report.txt), which the tests compare against.
 
 ```
 EventLens report for TEST-PC
-Logs: System, Application   Period: 1 Oct 2026 08:00 to 7 Oct 2026 21:14 (BST)
-Events read: 4,812
+Logs: Application, System
+Period: 1 Oct 2026 00:00 to 7 Oct 2026 23:00 (UTC)
+Events read: 101 (98 in this period)
 
 Verdict: Serious problems found.
-This PC crashed 3 times in the last 7 days.
+This PC shut down unexpectedly 4 times, including 3 blue screen crashes.
 
 ---------------------------------------------------------------------------
-CRITICAL  Blue screen crash                    3 times, last 6 Oct 21:02
+CRITICAL  Blue screen crash                       3 times, last 6 Oct 21:02
 ---------------------------------------------------------------------------
-What happened:  Windows hit a fatal error and restarted.
-Stop codes:     DRIVER_POWER_STATE_FAILURE (0x9F) x3
-What it means:  A driver didn't respond in time while the PC was going to
-                sleep or waking up.
-What to do:     Update your graphics, Wi-Fi, and chipset drivers from the
-                PC maker's website. If it keeps happening, try turning off
-                Fast Startup.
+Stop codes:     3x DRIVER_POWER_STATE_FAILURE (0x9F): a driver failed
+                   during sleep or wake
+What it means:  Windows hit a fatal error and restarted.
+What to do:     Use the hint for each stop code above. Update the drivers
+                (graphics, Wi-Fi, chipset, storage) from the PC or
+                motherboard maker's website and install all Windows
+                updates. If crashes continue, run Windows Memory
+                Diagnostic.
 
----------------------------------------------------------------------------
-HIGH      App crashed                          6 times, last 7 Oct 19:40
----------------------------------------------------------------------------
-Details:        game.exe x5 (module: d3d11.dll), notepad.exe x1
-What it means:  These programs closed unexpectedly.
-What to do:     Update the app. Crashes in a graphics module such as
-                d3d11.dll often go away after a graphics driver update.
-
----------------------------------------------------------------------------
-MEDIUM    Windows Update failed to install     2 times, last 5 Oct 03:00
----------------------------------------------------------------------------
-Details:        2026-10 Cumulative Update (KB5049999), error 0x800f0922
-What to do:     Restart and run Windows Update again. If it keeps failing,
-                run the Windows Update troubleshooter.
+(...6 more findings: app crashes, display driver resets, a service crash,
+ failed updates, DNS timeouts, and corrected memory errors...)
 
 Normal activity (no action needed)
-  - 2 planned restarts, requested by TrustedInstaller.exe (Windows Update)
-  - 41 DCOM 10016 warnings: harmless, safe to ignore
+  - DCOM permission warnings (harmless, safe to ignore): 41 times
+  - Planned restart or shutdown: 2 times
+      2x restart requested by TrustedInstaller.exe
 
-Not yet recognised (top 3 of 3 error types)
-  - Microsoft-Windows-Bits-Client 16392     4 times
-  - nvlddmkm 14                             2 times
-  - Microsoft-Windows-Kernel-EventTracing 2 1 time
+Not yet recognised (top 3 of 3 event types)
+  - Microsoft-Windows-Bits-Client 16392 (Error)                     4 times
+  - nvlddmkm 14 (Error)                                             2 times
+  - Microsoft-Windows-Kernel-EventTracing 2 (Error)                  1 time
 ```
 
 Rules:
 
 - Times are shown in the local time zone of the machine running EventLens, with the zone name, unless `--utc` is passed.
-- Each finding shows at most 3 distinct details plus "and N more".
+- Each finding shows at most 3 distinct details, one per line with its count ("5x game.exe"), plus "...and N more".
 - The "Normal activity" and "Not yet recognised" sections are left out when empty.
 - If no events are in the window, the report says so and suggests a larger `--days`.
+- `--verbose` adds a "Latest event" line to each finding with the raw provider, ID, and event data.
 
 ## 8. Privacy and safety
 
@@ -256,36 +252,39 @@ Rules:
 | --- | --- | --- |
 | `models.py` | `Event`, `Level` | Built |
 | `sources.py` | Read `.evtx`, `.xml`, and live logs | Built |
-| `catalog.py` | Event catalog and stop codes | M1 |
-| `analyzer.py` | Filtering, matching, grouping, incidents, ranking | M1 |
-| `report.py` | Text rendering | M1 |
-| `cli.py` | Argument parsing, exit codes, logging setup | M1 |
+| `catalog.py` | Event catalog and stop codes | Built |
+| `analyzer.py` | Filtering, matching, grouping, incidents, ranking | Built |
+| `report.py` | Text rendering | Built |
+| `cli.py` | Argument parsing, exit codes, logging setup | Built |
 
 Testing:
 
 - Unit tests for each module with pytest.
-- An XML fixture with at least one event for every catalog entry, plus crash incidents of each type.
+- A test that every catalog entry is matched by its provider and event ID, and analyzer tests for each crash incident type.
+- [`examples/sample_week.xml`](examples/sample_week.xml): a made-up week covering crash incidents, common problems, harmless noise, unrecognised events, and an event older than the window.
 - A golden-file test comparing the full report for a fixed fixture, with times shown in UTC so the test is stable.
 - CLI tests for the arguments, exit codes, and the non-Windows live-mode message.
 - CI runs everything on Windows, macOS, and Linux (built in M0).
 
-No new runtime dependencies are planned for M1: `argparse` and the standard library are enough.
+M1 added no runtime dependencies: `argparse` and the standard library are enough. `ruff` checks code style locally and in CI.
 
 ## 10. Roadmap
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
 | **M0 Foundation** | uv project, event model, `.evtx`/`.xml`/live readers, tests, cross-platform CI | Done |
-| **M1 Core report** | Catalog, analyzer, crash incidents, text report, CLI (this spec) | Next |
-| **M2 Output options** | `--format json` and `markdown`, colour in terminals, `--output FILE`, `--fail-on SEVERITY` exit codes | Planned |
+| **M1 Core report** | Catalog, analyzer, crash incidents, text report, CLI (this spec) | Done |
+| **M2 Output options** | `--format json` and `markdown`, colour in terminals, `--output FILE`, `--fail-on SEVERITY` exit codes | Next |
 | **M3 Power diagnostics** | Parse `powercfg /batteryreport /xml` (battery wear and capacity history), `/sleepstudy` and sleep/wake events (Kernel-Power 42, 107, 506, 507) to explain battery drain and failed sleep | Planned |
 | **M4 Timeline** | Boot and shutdown sessions (Kernel-General 12/13, EventLog 6005/6006), uptime, and "what happened in the minutes before each crash" | Planned |
 | **M5 Catalog growth** | Move the catalog to a data file (TOML) so new events can be added without code; more events; optional Security log | Planned |
 | **M6 Distribution** | Publish to PyPI (`uvx eventlens`), plus a standalone Windows `.exe` for people without Python | Planned |
 
-## 11. Open questions
+## 11. Decisions
 
-1. **Power diagnostics timing.** The README promises power diagnostics, but this spec puts them in M3 so v1 can ship sooner. Should any of it move into v1?
-2. **Crash incident window.** Is 10 minutes the right gap for grouping crash events? A slow boot can push 6008 a few minutes after 41.
-3. **Default time window.** Is 7 days the right default, or should it be 30?
-4. **Report times.** Local time zone of the machine running EventLens (proposed), or the time zone of the machine the log came from? An `.evtx` file doesn't record its time zone, so the second option would need a `--tz` flag.
+These were open questions in the first draft. All were settled by keeping the proposed defaults:
+
+1. **Power diagnostics** stay in M3, so v1 ships sooner.
+2. **Crash incident window** is 10 minutes, and a repeated event ID always starts a new incident.
+3. **Default time window** is 7 days.
+4. **Report times** use the local time zone of the machine running EventLens, or UTC with `--utc`.
