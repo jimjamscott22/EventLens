@@ -47,6 +47,33 @@ def test_repeated_event_id_starts_a_new_incident(make_event):
     assert finding(analyze(events), "power-loss").count == 2
 
 
+def test_crash_events_from_different_computers_are_separate_incidents(make_event):
+    # Two PCs, each with half of the evidence for one crash.
+    events = [
+        make_event(POWER, 41, computer="PC1"),
+        make_event("EventLog", 6008, minutes=1, computer="PC2"),
+    ]
+    assert finding(analyze(events), "power-loss").count == 2
+
+
+def test_blue_screen_evidence_stays_with_its_computer(make_event):
+    events = [
+        make_event(POWER, 41, computer="PC1", data={"BugcheckCode": "159"}),
+        make_event("EventLog", 6008, minutes=1, computer="PC2"),
+    ]
+    analysis = analyze(events)
+    assert finding(analysis, "blue-screen").count == 1
+    assert finding(analysis, "power-loss").count == 1  # PC2 is not blamed on a blue screen
+
+
+def test_computer_names_are_compared_ignoring_case(make_event):
+    events = [
+        make_event(POWER, 41, computer="Test-PC"),
+        make_event("EventLog", 6008, minutes=1, computer="TEST-PC"),
+    ]
+    assert finding(analyze(events), "power-loss").count == 1
+
+
 def test_incident_time_is_its_earliest_event(make_event):
     events = [make_event("EventLog", 6008, minutes=3), make_event(POWER, 41, minutes=1)]
     crash = analyze(events).findings[0]

@@ -183,6 +183,19 @@ def test_unreadable_evtx_records_are_skipped_and_logged(monkeypatch, caplog):
     assert "Skipped 2 unreadable record(s)" in caplog.text
 
 
+def test_io_error_while_reading_evtx_raises_source_error(monkeypatch):
+    class FakeParser:
+        def __init__(self, path):
+            pass
+
+        def records(self):
+            return FakeRecords([OSError("The network path was not found")])
+
+    monkeypatch.setattr(sources, "PyEvtxParser", FakeParser)
+    with pytest.raises(SourceError, match="Could not finish reading.*network path"):
+        sources.read_evtx(Path("share.evtx"))
+
+
 # --- Errors ---
 
 

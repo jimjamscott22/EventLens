@@ -165,6 +165,9 @@ def read_evtx(path: Path) -> list[Event]:
         except RuntimeError:
             skipped += 1
             continue
+        except OSError as exc:
+            # For example a network share that disconnects mid-read.
+            raise SourceError(f"Could not finish reading {path}: {exc}") from exc
         try:
             events.extend(parse_events_xml(record["data"]))
         except SourceError:

@@ -134,19 +134,27 @@ def _group_incidents(events: list[Event]) -> list[list[Event]]:
 
     An incident starts with its earliest event and takes in later events
     within ``INCIDENT_WINDOW``. Each restart writes each crash event at most
-    once, so a repeated event ID always starts a new incident.
+    once, so a repeated event ID always starts a new incident. Events from
+    different computers (when several logs are combined) never share an
+    incident.
     """
+    by_computer: dict[str, list[Event]] = {}
+    for event in events:
+        by_computer.setdefault(event.computer.lower(), []).append(event)
+
     incidents: list[list[Event]] = []
-    for event in sorted(events, key=lambda e: e.time):
-        current = incidents[-1] if incidents else None
-        if (
-            current is not None
-            and event.time - current[0].time <= INCIDENT_WINDOW
-            and event_key(event) not in {event_key(e) for e in current}
-        ):
-            current.append(event)
-        else:
-            incidents.append([event])
+    for computer_events in by_computer.values():
+        current: list[Event] | None = None
+        for event in sorted(computer_events, key=lambda e: e.time):
+            if (
+                current is not None
+                and event.time - current[0].time <= INCIDENT_WINDOW
+                and event_key(event) not in {event_key(e) for e in current}
+            ):
+                current.append(event)
+            else:
+                current = [event]
+                incidents.append(current)
     return incidents
 
 
