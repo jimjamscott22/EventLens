@@ -94,6 +94,19 @@ def test_days_must_be_positive(value, capsys):
     assert exc.value.code == 2
 
 
+@pytest.mark.parametrize("value", ["36501", "1000000", "99999999999999999999"])
+def test_days_beyond_the_limit_is_an_argument_error(value, capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(["--file", SAMPLE_WEEK, "--days", value])
+    assert exc.value.code == 2
+    assert "must be 36500 or less" in capsys.readouterr().err
+
+
+def test_days_at_the_limit_works(capsys):
+    assert main(["--file", SAMPLE_WEEK, "--utc", "--days", "36500"]) == 0
+    assert "Events read: 101 (101 in this period)" in capsys.readouterr().out
+
+
 def test_version(capsys):
     with pytest.raises(SystemExit) as exc:
         main(["--version"])

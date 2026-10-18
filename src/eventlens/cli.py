@@ -16,6 +16,7 @@ from eventlens.report import render
 from eventlens.sources import DEFAULT_CHANNELS, SourceError, read_file, read_live
 
 DEFAULT_DAYS = 7
+MAX_DAYS = 36500  # 100 years: more than any log holds, and well inside the datetime range
 DEFAULT_MAX_EVENTS = 5000
 DEFAULT_TOP = 10
 
@@ -30,6 +31,13 @@ def _positive_int(value: str) -> int:
         raise argparse.ArgumentTypeError(f"expected a whole number, got {value!r}") from None
     if number < 1:
         raise argparse.ArgumentTypeError(f"must be 1 or more, got {number}")
+    return number
+
+
+def _days(value: str) -> int:
+    number = _positive_int(value)
+    if number > MAX_DAYS:
+        raise argparse.ArgumentTypeError(f"must be {MAX_DAYS} or less, got {number}")
     return number
 
 
@@ -57,7 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--days",
-        type=_positive_int,
+        type=_days,
         default=DEFAULT_DAYS,
         metavar="N",
         help=(

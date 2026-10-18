@@ -57,7 +57,7 @@ eventlens [--file PATH]... [--channel NAME]... [--days N] [--max-events N]
 | --- | --- | --- |
 | `--file PATH` | none (live mode) | Read an exported `.evtx` or `.xml` file. Repeatable. |
 | `--channel NAME` | `System`, `Application` | Live mode only: which channels to read. Repeatable. |
-| `--days N` | 7 | Only look at the last N days. For live logs this counts back from now. For files it counts back from the newest event in the file, so an export made last month still gives a useful report. |
+| `--days N` | 7 | Only look at the last N days (1 to 36500). For live logs this counts back from now. For files it counts back from the newest event in the file, so an export made last month still gives a useful report. |
 | `--max-events N` | 5000 per channel | Live mode only: cap on events read, newest first. |
 | `--include-warnings` | off | Also list unrecognised **warnings** in the "Not yet recognised" section (errors and critical events are always listed). |
 | `--top N` | 10 | Maximum number of unrecognised event types to list. |
