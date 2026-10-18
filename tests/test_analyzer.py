@@ -234,6 +234,16 @@ def test_crash_headline_singular(make_event):
     )
 
 
+def test_computer_names_differing_only_in_case_are_one_computer(make_event):
+    events = [
+        make_event("A", 1, computer="Test-PC"),
+        make_event("A", 1, computer="TEST-PC"),
+        make_event("A", 1, computer="TEST-PC"),
+        make_event("A", 1, computer="OTHER"),
+    ]
+    assert analyze(events).computers == ["TEST-PC", "OTHER"]
+
+
 def test_computers_listed_most_common_first(make_event):
     events = [
         make_event("A", 1, computer="PC-2"),

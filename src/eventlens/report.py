@@ -172,8 +172,8 @@ def render(analysis: Analysis, top: int = 10, utc: bool = False, verbose: bool =
         f"({clock.zone(analysis.end)})"
     )
     lines += _wrap(f"Logs: {logs}", indent=len("Logs: "))
+    lines += _wrap(f"Period: {period}", indent=len("Period: "))
     lines += [
-        f"Period: {period}",
         f"Events read: {analysis.events_read:,} ({analysis.events_in_window:,} in this period)",
         "",
         f"Verdict: {analysis.verdict}",

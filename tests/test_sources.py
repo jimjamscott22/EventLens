@@ -227,12 +227,57 @@ def test_wevtutil_failure_message_is_passed_on(monkeypatch):
 
     class Failed:
         returncode = 15007
-        stdout = ""
-        stderr = "The specified channel could not be found.\n"
+        stdout = b""
+        stderr = "The specified channel could not be found.\n".encode("utf-16")
 
     monkeypatch.setattr(sources.subprocess, "run", lambda *a, **k: Failed())
     with pytest.raises(SourceError, match="wevtutil failed: The specified channel"):
         read_live("Nope", days=7, max_events=100)
+
+
+def test_wevtutil_is_asked_for_unicode_output(monkeypatch):
+    monkeypatch.setattr(sources.sys, "platform", "win32")
+    monkeypatch.setattr(sources.shutil, "which", lambda name: "wevtutil")
+    seen = []
+
+    class Done:
+        returncode = 0
+        stdout = "<Events/>".encode("utf-16")
+        stderr = b""
+
+    monkeypatch.setattr(sources.subprocess, "run", lambda cmd, **kw: seen.append(cmd) or Done())
+    assert read_live("System", days=1, max_events=5) == []
+    assert "/uni:true" in seen[0]
+
+
+TEXT = "Caf\u00e9 \u00dcn\u00efc\u00f6d\u00e9 \u65e5\u672c\u8a9e"
+
+
+@pytest.mark.parametrize(
+    ("raw", "label"),
+    [
+        (TEXT.encode("utf-16"), "UTF-16 with a byte order mark"),
+        (TEXT.encode("utf-16-le"), "UTF-16 little-endian, no byte order mark"),
+        (TEXT.encode("utf-8-sig"), "UTF-8 with a byte order mark"),
+        (TEXT.encode("utf-8"), "plain UTF-8"),
+    ],
+    ids=lambda v: v if isinstance(v, str) else "",
+)
+def test_wevtutil_output_encodings_are_detected(raw, label):
+    assert sources.decode_wevtutil_output(raw) == TEXT
+
+
+def test_ascii_xml_in_utf16_without_bom_is_detected():
+    assert sources.decode_wevtutil_output("<Events/>".encode("utf-16-le")) == "<Events/>"
+
+
+def test_ansi_output_uses_the_system_code_page(monkeypatch):
+    monkeypatch.setattr(sources.locale, "getpreferredencoding", lambda do_setlocale=True: "cp1252")
+    assert sources.decode_wevtutil_output("Caf\u00e9".encode("cp1252")) == "Caf\u00e9"
+
+
+def test_empty_wevtutil_output():
+    assert sources.decode_wevtutil_output(b"") == ""
 
 
 def test_live_reading_explains_it_needs_windows(monkeypatch):

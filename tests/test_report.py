@@ -5,7 +5,7 @@ from pathlib import Path
 from eventlens.analyzer import analyze
 from eventlens.cli import main
 from eventlens.models import Level
-from eventlens.report import WIDTH, render
+from eventlens.report import WIDTH, Clock, render
 
 ROOT = Path(__file__).parent.parent
 SAMPLE_WEEK = ROOT / "examples" / "sample_week.xml"
@@ -96,6 +96,14 @@ def test_long_values_from_the_log_never_exceed_the_width(make_event):
     for line in text.splitlines():
         assert len(line) <= WIDTH, line
     assert "Logs: Microsoft-Windows-Diagnostics-Performance/Operational," in text
+
+
+def test_long_time_zone_names_wrap(make_event, monkeypatch):
+    monkeypatch.setattr(Clock, "zone", lambda self, moment: "W. Central Africa Standard Time")
+    text = render(analyze([make_event("disk", 7)]))
+    assert "(W. Central Africa Standard Time)" in " ".join(text.split())
+    for line in text.splitlines():
+        assert len(line) <= WIDTH, line
 
 
 def test_verbose_shows_latest_event(make_event):

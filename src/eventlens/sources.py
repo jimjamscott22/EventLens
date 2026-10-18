@@ -6,6 +6,8 @@ channels can only be queried on Windows.
 
 from __future__ import annotations
 
+import codecs
+import locale
 import logging
 import re
 import shutil
@@ -118,6 +120,29 @@ def parse_events_xml(text: str) -> list[Event]:
     return events
 
 
+def decode_wevtutil_output(raw: bytes) -> str:
+    """Decode wevtutil output without assuming its encoding.
+
+    With ``/uni:true`` wevtutil writes Unicode (normally UTF-16 little-endian,
+    which Windows is), but its documentation doesn't say which encoding is
+    used when the output is piped, so look at the bytes instead.
+    """
+    if raw.startswith(codecs.BOM_UTF8):
+        return raw.decode("utf-8-sig")
+    if raw.startswith((codecs.BOM_UTF16_LE, codecs.BOM_UTF16_BE)):
+        return raw.decode("utf-16")
+    # UTF-16 without a byte order mark: ASCII-range text has a zero byte next
+    # to every character, which valid UTF-8 text never contains.
+    if b"\x00" in raw[:256]:
+        return raw.decode("utf-16-le", errors="replace")
+    try:
+        return raw.decode("utf-8")
+    except UnicodeDecodeError:
+        # Output in the system's ANSI code page (what wevtutil writes when
+        # Unicode is not requested).
+        return raw.decode(locale.getpreferredencoding(False), errors="replace")
+
+
 def _run_wevtutil(args: list[str]) -> str:
     exe = shutil.which("wevtutil")
     if exe is None:
@@ -126,20 +151,13 @@ def _run_wevtutil(args: list[str]) -> str:
             "use --file with an exported .evtx or .xml log instead."
         )
     try:
-        result = subprocess.run(
-            [exe, *args],
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
-            check=False,
-        )
+        result = subprocess.run([exe, *args, "/uni:true"], capture_output=True, check=False)
     except OSError as exc:
         raise SourceError(f"Could not run wevtutil: {exc}") from exc
     if result.returncode != 0:
-        detail = (result.stderr or result.stdout).strip()
+        detail = decode_wevtutil_output(result.stderr or result.stdout).strip()
         raise SourceError(f"wevtutil failed: {detail}")
-    return result.stdout
+    return decode_wevtutil_output(result.stdout)
 
 
 def read_evtx(path: Path) -> list[Event]:

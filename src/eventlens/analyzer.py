@@ -182,6 +182,18 @@ def classify_incident(events: list[Event]) -> tuple[Rule, str | None]:
     return POWER_LOSS, None
 
 
+def _computer_names(events: list[Event]) -> list[str]:
+    """Distinct computers, most events first. Names that differ only in case
+    count as one computer (matching how crash incidents are grouped), shown
+    in their most common spelling."""
+    spellings: dict[str, Counter[str]] = {}
+    for event in events:
+        if event.computer:
+            spellings.setdefault(event.computer.lower(), Counter())[event.computer] += 1
+    ranked = sorted(spellings.values(), key=lambda s: -sum(s.values()))
+    return [s.most_common(1)[0][0] for s in ranked]
+
+
 def _sort_key(finding: Finding) -> tuple:
     last = finding.last.timestamp() if finding.last else 0
     return (-finding.severity, -finding.count, -last)
@@ -245,6 +257,6 @@ def analyze(
         events_in_window=len(window),
         start=min(times, default=None),
         end=max(times, default=None),
-        computers=[c for c, _ in Counter(e.computer for e in window if e.computer).most_common()],
+        computers=_computer_names(window),
         channels=sorted({e.channel for e in window if e.channel}),
     )
