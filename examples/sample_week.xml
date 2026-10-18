@@ -1,0 +1,1391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A made-up week on a troubled PC, for trying EventLens. -->
+<Events>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Application Error"/>
+      <EventID Qualifiers="0">1000</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-09-20T12:00:00.0000000Z"/>
+      <Channel>Application</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>oldapp.exe</Data>
+      <Data>1.0.0.0</Data>
+      <Data>5f000000</Data>
+      <Data>oldapp.dll</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>12</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-09-30T22:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="MajorVersion">10</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6005</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-09-30T22:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T00:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T01:07:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T02:14:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T03:21:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T04:28:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T05:35:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DNS-Client"/>
+      <EventID>1014</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-01T08:30:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="QueryName">www.example.com</Data>
+      <Data Name="AddressLength">128</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Bits-Client"/>
+      <EventID>16392</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T12:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="name">job</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>12</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-01T21:02:05.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="MajorVersion">10</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6005</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-01T21:02:05.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-Power"/>
+      <EventID>41</EventID>
+      <Level>1</Level>
+      <TimeCreated SystemTime="2026-10-01T21:02:20.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="BugcheckCode">159</Data>
+      <Data Name="BugcheckParameter1">0x3</Data>
+      <Data Name="PowerButtonTimestamp">0</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6008</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T21:02:31.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>8:59:12 PM</Data>
+      <Data>10/6/2026</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-WER-SystemErrorReporting"/>
+      <EventID Qualifiers="16384">1001</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T21:03:40.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>0x0000009f (0x0000000000000003, 0xffffc206a1e5c060, 0xfffff8017a27f750, 0xffffc206a9d1a010)</Data>
+      <Data>C:\WINDOWS\MEMORY.DMP</Data>
+      <Data>a1b2c3d4</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>16</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-01T23:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="HiveName">x</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T07:01:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T08:08:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="e1iexpress"/>
+      <EventID>27</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-02T09:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>Intel(R) Ethernet Connection</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T09:15:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T10:22:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T11:29:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T12:36:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-WHEA-Logger"/>
+      <EventID>47</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-02T14:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="ErrorSource">2</Data>
+      <Data Name="ErrorType">9</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="nvlddmkm"/>
+      <EventID Qualifiers="0">14</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T19:37:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>\Device\Video3</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Display"/>
+      <EventID Qualifiers="0">4101</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-02T19:38:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>nvlddmkm</Data>
+      <Data></Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Application Error"/>
+      <EventID Qualifiers="0">1000</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T19:40:00.0000000Z"/>
+      <Channel>Application</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>game.exe</Data>
+      <Data>1.2.0.0</Data>
+      <Data>66a1b2c3</Data>
+      <Data>d3d11.dll</Data>
+      <Data>10.0.26100.1</Data>
+      <Data>a1b2c3d4</Data>
+      <Data>c0000005</Data>
+      <Data>000000000001a2b3</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>16</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-02T23:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="HiveName">x</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-EventTracing"/>
+      <EventID>2</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T07:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="SessionName">ReadyBoot</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DNS-Client"/>
+      <EventID>1014</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-03T08:30:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="QueryName">update.example.net</Data>
+      <Data Name="AddressLength">128</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>12</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-03T10:15:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="MajorVersion">10</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6005</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-03T10:15:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-Power"/>
+      <EventID>41</EventID>
+      <Level>1</Level>
+      <TimeCreated SystemTime="2026-10-03T10:15:12.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="BugcheckCode">0</Data>
+      <Data Name="PowerButtonTimestamp">134041234560000000</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6008</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T10:15:30.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>10:09:55 AM</Data>
+      <Data>10/3/2026</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Bits-Client"/>
+      <EventID>16392</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T12:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="name">job</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T14:02:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T15:09:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T16:16:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T17:23:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T18:30:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T19:37:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Application Error"/>
+      <EventID Qualifiers="0">1000</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-03T20:40:00.0000000Z"/>
+      <Channel>Application</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>game.exe</Data>
+      <Data>1.2.0.0</Data>
+      <Data>66a1b2c3</Data>
+      <Data>d3d11.dll</Data>
+      <Data>10.0.26100.1</Data>
+      <Data>a1b2c3d4</Data>
+      <Data>c0000005</Data>
+      <Data>000000000001a2b3</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>16</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-03T23:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="HiveName">x</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T00:24:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T01:31:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T02:38:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-WindowsUpdateClient"/>
+      <EventID>20</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T03:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="errorCode">0x800f0922</Data>
+      <Data Name="updateTitle">2026-10 Cumulative Update for Windows 11 (KB5049999)</Data>
+      <Data Name="updateGuid">{00000000-0000-0000-0000-000000000000}</Data>
+      <Data Name="updateRevisionNumber">1</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="User32"/>
+      <EventID Qualifiers="32768">1074</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-04T03:05:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>C:\Windows\servicing\TrustedInstaller.exe (TEST-PC)</Data>
+      <Data>TEST-PC</Data>
+      <Data>Operating System: Upgrade (Planned)</Data>
+      <Data>0x80020003</Data>
+      <Data>restart</Data>
+      <Data></Data>
+      <Data>NT AUTHORITY\SYSTEM</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="e1iexpress"/>
+      <EventID>27</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-04T09:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>Intel(R) Ethernet Connection</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Service Control Manager"/>
+      <EventID Qualifiers="49152">7031</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T11:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">Print Spooler</Data>
+      <Data Name="param2">1</Data>
+      <Data Name="param3">5000</Data>
+      <Data Name="param4">1</Data>
+      <Data Name="param5">Restart the service</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-WHEA-Logger"/>
+      <EventID>47</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-04T14:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="ErrorSource">2</Data>
+      <Data Name="ErrorType">9</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>12</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-04T18:30:05.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="MajorVersion">10</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6005</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-04T18:30:05.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-Power"/>
+      <EventID>41</EventID>
+      <Level>1</Level>
+      <TimeCreated SystemTime="2026-10-04T18:30:20.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="BugcheckCode">159</Data>
+      <Data Name="BugcheckParameter1">0x3</Data>
+      <Data Name="PowerButtonTimestamp">0</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6008</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T18:30:31.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>8:59:12 PM</Data>
+      <Data>10/6/2026</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-WER-SystemErrorReporting"/>
+      <EventID Qualifiers="16384">1001</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T18:31:40.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>0x0000009f (0x0000000000000003, 0xffffc206a1e5c060, 0xfffff8017a27f750, 0xffffc206a9d1a010)</Data>
+      <Data>C:\WINDOWS\MEMORY.DMP</Data>
+      <Data>a1b2c3d4</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T21:03:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T22:10:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>16</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-04T23:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="HiveName">x</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-04T23:17:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-WindowsUpdateClient"/>
+      <EventID>20</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T03:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="errorCode">0x800f0922</Data>
+      <Data Name="updateTitle">2026-10 Cumulative Update for Windows 11 (KB5049999)</Data>
+      <Data Name="updateGuid">{00000000-0000-0000-0000-000000000000}</Data>
+      <Data Name="updateRevisionNumber">1</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="User32"/>
+      <EventID Qualifiers="32768">1074</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-05T03:05:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>C:\Windows\servicing\TrustedInstaller.exe (TEST-PC)</Data>
+      <Data>TEST-PC</Data>
+      <Data>Operating System: Upgrade (Planned)</Data>
+      <Data>0x80020003</Data>
+      <Data>restart</Data>
+      <Data></Data>
+      <Data>NT AUTHORITY\SYSTEM</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T04:04:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T05:11:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T06:18:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T07:25:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DNS-Client"/>
+      <EventID>1014</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-05T08:30:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="QueryName">www.example.com</Data>
+      <Data Name="AddressLength">128</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T08:32:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Application Error"/>
+      <EventID>1000</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T09:12:00.0000000Z"/>
+      <Channel>Application</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="AppName">notepad.exe</Data>
+      <Data Name="AppVersion">11.2409.9.0</Data>
+      <Data Name="ModuleName">ntdll.dll</Data>
+      <Data Name="ExceptionCode">c0000374</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T09:39:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Bits-Client"/>
+      <EventID>16392</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T12:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="name">job</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Application Error"/>
+      <EventID Qualifiers="0">1000</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-05T21:40:00.0000000Z"/>
+      <Channel>Application</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>game.exe</Data>
+      <Data>1.2.0.0</Data>
+      <Data>66a1b2c3</Data>
+      <Data>d3d11.dll</Data>
+      <Data>10.0.26100.1</Data>
+      <Data>a1b2c3d4</Data>
+      <Data>c0000005</Data>
+      <Data>000000000001a2b3</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>16</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-05T23:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="HiveName">x</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="e1iexpress"/>
+      <EventID>27</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-06T09:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>Intel(R) Ethernet Connection</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T11:05:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T12:12:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T13:19:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-WHEA-Logger"/>
+      <EventID>47</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-06T14:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="ErrorSource">2</Data>
+      <Data Name="ErrorType">9</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T14:26:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T15:33:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T16:40:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Application Error"/>
+      <EventID Qualifiers="0">1000</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T18:40:00.0000000Z"/>
+      <Channel>Application</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>game.exe</Data>
+      <Data>1.2.0.0</Data>
+      <Data>66a1b2c3</Data>
+      <Data>d3d11.dll</Data>
+      <Data>10.0.26100.1</Data>
+      <Data>a1b2c3d4</Data>
+      <Data>c0000005</Data>
+      <Data>000000000001a2b3</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="nvlddmkm"/>
+      <EventID Qualifiers="0">14</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T20:57:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>\Device\Video3</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Display"/>
+      <EventID Qualifiers="0">4101</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-06T20:58:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>nvlddmkm</Data>
+      <Data></Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>12</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-06T21:02:05.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="MajorVersion">10</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6005</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-06T21:02:05.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-Power"/>
+      <EventID>41</EventID>
+      <Level>1</Level>
+      <TimeCreated SystemTime="2026-10-06T21:02:20.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="BugcheckCode">159</Data>
+      <Data Name="BugcheckParameter1">0x3</Data>
+      <Data Name="PowerButtonTimestamp">0</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6008</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T21:02:31.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>8:59:12 PM</Data>
+      <Data>10/6/2026</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-WER-SystemErrorReporting"/>
+      <EventID Qualifiers="16384">1001</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-06T21:03:40.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>0x0000009f (0x0000000000000003, 0xffffc206a1e5c060, 0xfffff8017a27f750, 0xffffc206a9d1a010)</Data>
+      <Data>C:\WINDOWS\MEMORY.DMP</Data>
+      <Data>a1b2c3d4</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>16</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-06T23:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="HiveName">x</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DNS-Client"/>
+      <EventID>1014</EventID>
+      <Level>3</Level>
+      <TimeCreated SystemTime="2026-10-07T08:30:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="QueryName">mail.example.org</Data>
+      <Data Name="AddressLength">128</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Bits-Client"/>
+      <EventID>16392</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-07T12:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="name">job</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-07T18:06:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-07T19:13:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Application Error"/>
+      <EventID Qualifiers="0">1000</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-07T19:40:00.0000000Z"/>
+      <Channel>Application</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>game.exe</Data>
+      <Data>1.2.0.0</Data>
+      <Data>66a1b2c3</Data>
+      <Data>d3d11.dll</Data>
+      <Data>10.0.26100.1</Data>
+      <Data>a1b2c3d4</Data>
+      <Data>c0000005</Data>
+      <Data>000000000001a2b3</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-07T20:20:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Winlogon"/>
+      <EventID>7001</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-07T21:14:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="UserSid">S-1-5-21</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-07T21:27:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-DistributedCOM"/>
+      <EventID Qualifiers="0">10016</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-07T22:34:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="param1">application-specific</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-General"/>
+      <EventID>16</EventID>
+      <Level>4</Level>
+      <TimeCreated SystemTime="2026-10-07T23:00:00.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="HiveName">x</Data>
+    </EventData>
+  </Event>
+</Events>

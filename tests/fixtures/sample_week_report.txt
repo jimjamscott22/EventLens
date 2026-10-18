@@ -1,0 +1,98 @@
+EventLens report for TEST-PC
+Logs: Application, System
+Period: 1 Oct 2026 00:00 to 7 Oct 2026 23:00 (UTC)
+Events read: 101 (98 in this period)
+
+Verdict: Serious problems found.
+This PC shut down unexpectedly 4 times, including 3 blue screen crashes.
+
+---------------------------------------------------------------------------
+CRITICAL  Blue screen crash                       3 times, last 6 Oct 21:02
+---------------------------------------------------------------------------
+Stop codes:     3x DRIVER_POWER_STATE_FAILURE (0x9F): a driver failed
+                   during sleep or wake
+What it means:  Windows hit a fatal error and restarted.
+What to do:     Use the hint for each stop code above. Update the drivers
+                (graphics, Wi-Fi, chipset, storage) from the PC or
+                motherboard maker's website and install all Windows
+                updates. If crashes continue, run Windows Memory
+                Diagnostic.
+
+---------------------------------------------------------------------------
+CRITICAL  Forced power-off                         1 time, last 3 Oct 10:15
+---------------------------------------------------------------------------
+What it means:  Someone held the power button to turn the PC off, usually
+                because it had frozen.
+What to do:     If the PC froze, update the drivers (graphics, Wi-Fi,
+                chipset, storage) from the PC or motherboard maker's
+                website and install all Windows updates. Check temperatures
+                if freezes happen under load.
+
+---------------------------------------------------------------------------
+HIGH      App crashed                             6 times, last 7 Oct 19:40
+---------------------------------------------------------------------------
+Details:        5x game.exe (module: d3d11.dll)
+                1x notepad.exe (module: ntdll.dll)
+What it means:  These programs closed unexpectedly.
+What to do:     Update or reinstall the app. Crashes in a graphics module
+                such as d3d11.dll or a GPU driver file often go away after
+                a graphics driver update.
+
+---------------------------------------------------------------------------
+HIGH      Display driver stopped responding and recovered
+          2 times, last 6 Oct 20:58
+---------------------------------------------------------------------------
+Driver:         2x nvlddmkm
+What it means:  The graphics driver froze and Windows restarted it. You may
+                have seen the screen go black or flicker.
+What to do:     Install the latest graphics driver from NVIDIA, AMD, or
+                Intel. If it happens in games, check GPU temperatures and
+                undo overclocking.
+
+---------------------------------------------------------------------------
+HIGH      Service stopped unexpectedly             1 time, last 4 Oct 11:00
+---------------------------------------------------------------------------
+Services:       1x Print Spooler
+What it means:  A background service crashed or stopped with an error.
+What to do:     Update or reinstall the software the service belongs to.
+                For Windows services, install updates and run 'sfc
+                /scannow' from an administrator command prompt.
+
+---------------------------------------------------------------------------
+MEDIUM    Windows Update failed to install        2 times, last 5 Oct 03:00
+---------------------------------------------------------------------------
+Updates:        2x 2026-10 Cumulative Update for Windows 11 (KB5049999),
+                   error 0x800f0922
+What it means:  An update downloaded but could not be installed.
+What to do:     Restart and run Windows Update again. If it keeps failing,
+                run the Windows Update troubleshooter or search for the
+                error code.
+
+---------------------------------------------------------------------------
+LOW       Website name lookups timed out          4 times, last 7 Oct 08:30
+---------------------------------------------------------------------------
+Names:          2x www.example.com
+                1x update.example.net
+                1x mail.example.org
+What it means:  The PC couldn't look up some website names in time. Brief
+                network drops cause this and it's usually harmless.
+What to do:     If websites often fail to load, restart your router, or try
+                a different DNS server.
+
+---------------------------------------------------------------------------
+LOW       Corrected memory error                  3 times, last 6 Oct 14:00
+---------------------------------------------------------------------------
+What it means:  The RAM returned bad data that was corrected automatically.
+                Repeated errors are an early sign of failing memory.
+What to do:     Run Windows Memory Diagnostic. If errors continue, reseat
+                or replace the RAM sticks.
+
+Normal activity (no action needed)
+  - DCOM permission warnings (harmless, safe to ignore): 41 times
+  - Planned restart or shutdown: 2 times
+      2x restart requested by TrustedInstaller.exe
+
+Not yet recognised (top 3 of 3 event types)
+  - Microsoft-Windows-Bits-Client 16392 (Error)                     4 times
+  - nvlddmkm 14 (Error)                                             2 times
+  - Microsoft-Windows-Kernel-EventTracing 2 (Error)                  1 time

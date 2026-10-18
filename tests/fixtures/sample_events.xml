@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Events>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Microsoft-Windows-Kernel-Power" Guid="{331c3b3a-2005-44c2-ac5e-77220c37d6b4}"/>
+      <EventID>41</EventID>
+      <Level>1</Level>
+      <TimeCreated SystemTime="2026-10-01T08:15:30.1234567Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data Name="BugcheckCode">159</Data>
+      <Data Name="PowerButtonTimestamp">0</Data>
+    </EventData>
+    <RenderingInfo Culture="en-US">
+      <Message>The system has rebooted without cleanly shutting down first.</Message>
+      <Level>Critical</Level>
+    </RenderingInfo>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="EventLog"/>
+      <EventID Qualifiers="32768">6008</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-01T08:15:45.0000000Z"/>
+      <Channel>System</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>8:10:02 AM</Data>
+      <Data>10/1/2026</Data>
+    </EventData>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Application Error"/>
+      <EventID Qualifiers="0">1000</EventID>
+      <Level>2</Level>
+      <TimeCreated SystemTime="2026-10-02T14:00:00.5Z"/>
+      <Channel>Application</Channel>
+      <Computer>TEST-PC</Computer>
+    </System>
+    <EventData>
+      <Data>game.exe</Data>
+      <Data>1.2.0.0</Data>
+    </EventData>
+  </Event>
+  <!-- Malformed events: skipped rather than failing the whole file. -->
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="Broken"/>
+      <EventID>not-a-number</EventID>
+      <TimeCreated SystemTime="2026-10-02T14:00:00Z"/>
+    </System>
+  </Event>
+  <Event xmlns="http://schemas.microsoft.com/win/2004/08/events/event">
+    <System>
+      <Provider Name="NoTime"/>
+      <EventID>1</EventID>
+    </System>
+  </Event>
+</Events>
