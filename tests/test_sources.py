@@ -209,6 +209,32 @@ def test_directory_is_not_treated_as_a_file(tmp_path):
         read_file(tmp_path)
 
 
+def test_wevtutil_that_cannot_start_raises_source_error(monkeypatch):
+    monkeypatch.setattr(sources.sys, "platform", "win32")
+    monkeypatch.setattr(sources.shutil, "which", lambda name: "C:\\Windows\\wevtutil.exe")
+
+    def cannot_start(*args, **kwargs):
+        raise PermissionError("Access is denied")
+
+    monkeypatch.setattr(sources.subprocess, "run", cannot_start)
+    with pytest.raises(SourceError, match="Could not run wevtutil: .*Access is denied"):
+        read_live("System", days=7, max_events=100)
+
+
+def test_wevtutil_failure_message_is_passed_on(monkeypatch):
+    monkeypatch.setattr(sources.sys, "platform", "win32")
+    monkeypatch.setattr(sources.shutil, "which", lambda name: "wevtutil")
+
+    class Failed:
+        returncode = 15007
+        stdout = ""
+        stderr = "The specified channel could not be found.\n"
+
+    monkeypatch.setattr(sources.subprocess, "run", lambda *a, **k: Failed())
+    with pytest.raises(SourceError, match="wevtutil failed: The specified channel"):
+        read_live("Nope", days=7, max_events=100)
+
+
 def test_live_reading_explains_it_needs_windows(monkeypatch):
     monkeypatch.setattr(sources.sys, "platform", "linux")
     with pytest.raises(SourceError, match="only works on Windows"):

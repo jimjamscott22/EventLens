@@ -125,14 +125,17 @@ def _run_wevtutil(args: list[str]) -> str:
             "wevtutil was not found. Live reading only works on Windows; "
             "use --file with an exported .evtx or .xml log instead."
         )
-    result = subprocess.run(
-        [exe, *args],
-        capture_output=True,
-        text=True,
-        encoding="utf-8",
-        errors="replace",
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            [exe, *args],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+        )
+    except OSError as exc:
+        raise SourceError(f"Could not run wevtutil: {exc}") from exc
     if result.returncode != 0:
         detail = (result.stderr or result.stdout).strip()
         raise SourceError(f"wevtutil failed: {detail}")
