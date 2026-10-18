@@ -130,7 +130,7 @@ A single crash usually leaves several events, written when the machine comes bac
 - **EventLog 6008**: "the previous shutdown was unexpected"
 - **WER-SystemErrorReporting 1001**: "rebooted from a bugcheck" (blue screen only)
 
-Listing these as three separate problems would triple-count one crash. Instead, any of these events within **10 minutes** of each other form one **incident**, which is classified like this:
+Listing these as three separate problems would triple-count one crash. Instead, different events from these within **10 minutes** of each other, on the same computer, form one **incident**. Each restart writes each of these events at most once, so the same event appearing again always starts a new incident: two crashes in quick succession are counted as two. An incident is classified like this:
 
 | Evidence | Incident type | Plain-English cause |
 | --- | --- | --- |
