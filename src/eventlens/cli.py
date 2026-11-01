@@ -12,6 +12,7 @@ from pathlib import Path
 
 from eventlens import __version__
 from eventlens.analyzer import analyze
+from eventlens.catalog import Severity
 from eventlens.color import COLOR_MODES, should_color
 from eventlens.models import Event
 from eventlens.report import render
@@ -25,7 +26,11 @@ DEFAULT_MAX_EVENTS = 5000
 DEFAULT_TOP = 10
 FORMATS = ("text", "json", "markdown")
 
+# Severities --fail-on accepts. Info is left out: it is never a problem.
+FAIL_ON_LEVELS = ("low", "medium", "high", "critical")
+
 EXIT_OK = 0
+EXIT_FINDINGS = 1  # --fail-on found a problem at or above the chosen severity
 EXIT_ERROR = 2
 
 
@@ -117,6 +122,15 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="FILE",
         help="write the report to FILE (UTF-8) instead of printing it",
     )
+    parser.add_argument(
+        "--fail-on",
+        choices=FAIL_ON_LEVELS,
+        metavar="SEVERITY",
+        help=(
+            "exit with code 1 if any problem is at least this severe "
+            f"({', '.join(FAIL_ON_LEVELS)}); the report is still produced"
+        ),
+    )
     parser.add_argument("--utc", action="store_true", help="show times in UTC")
     parser.add_argument(
         "--verbose", action="store_true", help="show the latest raw event for each finding"
@@ -187,6 +201,11 @@ def main(argv: Sequence[str] | None = None) -> int:
             return EXIT_ERROR
     else:
         sys.stdout.write(text)
+
+    if args.fail_on is not None:
+        threshold = Severity[args.fail_on.upper()]
+        if any(finding.severity >= threshold for finding in analysis.problems):
+            return EXIT_FINDINGS
     return EXIT_OK
 
 
