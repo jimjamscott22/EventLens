@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
@@ -11,6 +12,7 @@ from pathlib import Path
 
 from eventlens import __version__
 from eventlens.analyzer import analyze
+from eventlens.color import COLOR_MODES, should_color
 from eventlens.models import Event
 from eventlens.report import render
 from eventlens.report_json import render_json
@@ -100,6 +102,15 @@ def build_parser() -> argparse.ArgumentParser:
         default="text",
         help="report format (default: text); json always uses UTC and lists everything",
     )
+    parser.add_argument(
+        "--color",
+        choices=COLOR_MODES,
+        default="auto",
+        help=(
+            "colour the text report (default: auto, which colours a terminal "
+            "unless NO_COLOR is set)"
+        ),
+    )
     parser.add_argument("--utc", action="store_true", help="show times in UTC")
     parser.add_argument(
         "--verbose", action="store_true", help="show the latest raw event for each finding"
@@ -155,7 +166,8 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.format == "markdown":
         text = render_markdown(analysis, top=args.top, utc=args.utc, verbose=args.verbose)
     else:
-        text = render(analysis, top=args.top, utc=args.utc, verbose=args.verbose)
+        use_color = should_color(args.color, sys.stdout, os.environ)
+        text = render(analysis, top=args.top, utc=args.utc, verbose=args.verbose, color=use_color)
     sys.stdout.write(text)
     return EXIT_OK
 

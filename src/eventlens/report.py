@@ -6,6 +6,7 @@ import textwrap
 from datetime import datetime, timezone
 
 from eventlens.analyzer import Analysis, Finding
+from eventlens.color import paint
 
 WIDTH = 75
 LABEL_WIDTH = 16
@@ -87,13 +88,19 @@ def _sample_text(finding: Finding) -> str | None:
     return text if len(text) <= 300 else text[:297] + "..."
 
 
-def _finding_block(finding: Finding, clock: Clock, verbose: bool) -> list[str]:
+def _finding_block(
+    finding: Finding, clock: Clock, verbose: bool, color: bool = False
+) -> list[str]:
     left = f"{finding.severity.label:<9} {finding.rule.title}"
     right = times(finding.count)
     if finding.last is not None:
         right += f", last {clock.short(finding.last)}"
     gap = WIDTH - len(left) - len(right)
     heading = f"{left}{' ' * gap}{right}" if gap >= 2 else f"{left}\n{' ' * 10}{right}"
+    if color:
+        # Colour last, so padding and wrapping were worked out on plain text.
+        label = finding.severity.label
+        heading = paint(label, finding.severity) + heading[len(label) :]
 
     lines = [RULE_LINE, heading, RULE_LINE]
     if finding.details:
@@ -153,8 +160,18 @@ def computer_text(computers: list[str]) -> str:
     return f"{computers[0]} and {others} other{'s' if others > 1 else ''}"
 
 
-def render(analysis: Analysis, top: int = 10, utc: bool = False, verbose: bool = False) -> str:
-    """Return the full report as a string ending in a newline."""
+def render(
+    analysis: Analysis,
+    top: int = 10,
+    utc: bool = False,
+    verbose: bool = False,
+    color: bool = False,
+) -> str:
+    """Return the full report as a string ending in a newline.
+
+    With ``color``, severity labels and the verdict get ANSI colour. Removing
+    the escape sequences gives exactly the plain report.
+    """
     clock = Clock(utc)
     lines = _wrap(f"EventLens report for {computer_text(analysis.computers)}", indent=4)
 
@@ -176,12 +193,12 @@ def render(analysis: Analysis, top: int = 10, utc: bool = False, verbose: bool =
     lines += [
         f"Events read: {analysis.events_read:,} ({analysis.events_in_window:,} in this period)",
         "",
-        f"Verdict: {analysis.verdict}",
+        f"Verdict: {paint(analysis.verdict, analysis.worst) if color else analysis.verdict}",
         *_wrap(analysis.headline),
         "",
     ]
     for finding in analysis.problems:
-        lines += _finding_block(finding, clock, verbose)
+        lines += _finding_block(finding, clock, verbose, color)
     lines += _normal_section(analysis)
     lines += _unrecognised_section(analysis, top)
 
