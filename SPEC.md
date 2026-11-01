@@ -268,7 +268,7 @@ Rules:
 
 Each finding has `id` (the catalog entry's key), `severity` (`critical`, `high`, `medium`, `low`, or `info`), `title`, `count`, `first`, `last`, `details` (a list of `{"detail", "count"}`, most common first), `meaning`, and `action`. With `--verbose` it also has `sample`: `provider`, `event_id`, `time`, and `data` for the latest event.
 
-All times are ISO 8601 in UTC (`2026-10-06T21:02:20Z`), whatever `--utc` says. Unlike the text report, JSON lists every detail and every unrecognised event type, so `--top` has no effect. Non-ASCII text is written as is (UTF-8).
+All times are ISO 8601 in UTC (`2026-10-06T21:02:20Z`), whatever `--utc` says. Unlike the text report, JSON lists every detail and every unrecognised event type, so `--top` has no effect. The output is pure ASCII: non-ASCII text is written as `\uXXXX` escapes, so a redirect or console that uses a legacy code page (common on Windows) can't change what a parser reads.
 
 ### 7.3 Colour
 

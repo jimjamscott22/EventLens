@@ -89,11 +89,19 @@ def test_json_with_no_events():
     assert doc["events_read"] == 0
 
 
-def test_json_is_ascii_safe_and_ends_with_newline(make_event):
-    event = make_event("Application Error", 1000, data={"param1": "café日.exe"})
+def test_json_ends_with_newline(make_event):
+    assert render_json(analyze([make_event("disk", 7)])).endswith("\n")
+
+
+def test_json_is_pure_ascii_so_no_console_or_redirect_encoding_can_damage_it(make_event):
+    # A redirected stdout on Windows often uses a legacy code page. Non-ASCII
+    # text is escaped (\uXXXX), so the bytes are the same in every encoding
+    # and a JSON parser still gets the original text back.
+    name = "caf\u00e9\u65e5\u672c\U0001f600.exe"
+    event = make_event("Application Error", 1000, data={"param1": name})
     text = render_json(analyze([event]))
-    assert text.endswith("\n")
-    assert json.loads(text)["findings"][0]["details"][0]["detail"].startswith("café")
+    assert text.isascii()
+    assert json.loads(text)["findings"][0]["details"][0]["detail"] == name
 
 
 # --- Markdown -----------------------------------------------------------

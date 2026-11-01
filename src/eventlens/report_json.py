@@ -50,7 +50,9 @@ def render_json(analysis: Analysis, verbose: bool = False) -> str:
     """Return the report as JSON ending in a newline.
 
     Unlike the text report, this lists every detail and every unrecognised
-    event type, and always uses UTC.
+    event type, and always uses UTC. The output is pure ASCII (non-ASCII text
+    is written as \\uXXXX escapes), so a console or redirect that uses a
+    legacy code page, common on Windows, can't change what a parser reads.
     """
     period = None
     if analysis.start is not None and analysis.end is not None:
@@ -78,4 +80,4 @@ def render_json(analysis: Analysis, verbose: bool = False) -> str:
             for group in analysis.unrecognised
         ],
     }
-    return json.dumps(document, indent=2, ensure_ascii=False) + "\n"
+    return json.dumps(document, indent=2) + "\n"
