@@ -137,6 +137,13 @@ uv run pytest      # run the tests
 uv run ruff check  # check code style
 ```
 
+CI also builds the wheel, installs it in a clean environment, and runs the real `eventlens` command on the sample log in every output format. To run the same check yourself:
+
+```bash
+uv build --wheel
+scripts/smoke_test.sh dist/eventlens-*.whl
+```
+
 The two tests that run the real `wevtutil` only run on Windows in CI, because they write an event to the log.
 
 - After an intended change to the report, regenerate the saved copy with `EVENTLENS_UPDATE_GOLDEN=1 uv run pytest tests/test_report.py`.
