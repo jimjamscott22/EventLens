@@ -111,6 +111,12 @@ def build_parser() -> argparse.ArgumentParser:
             "unless NO_COLOR is set)"
         ),
     )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        metavar="FILE",
+        help="write the report to FILE (UTF-8) instead of printing it",
+    )
     parser.add_argument("--utc", action="store_true", help="show times in UTC")
     parser.add_argument(
         "--verbose", action="store_true", help="show the latest raw event for each finding"
@@ -166,9 +172,21 @@ def main(argv: Sequence[str] | None = None) -> int:
     elif args.format == "markdown":
         text = render_markdown(analysis, top=args.top, utc=args.utc, verbose=args.verbose)
     else:
-        use_color = should_color(args.color, sys.stdout, os.environ)
+        # Only colour what goes to a screen, never a file.
+        use_color = args.output is None and should_color(args.color, sys.stdout, os.environ)
         text = render(analysis, top=args.top, utc=args.utc, verbose=args.verbose, color=use_color)
-    sys.stdout.write(text)
+    if args.output is not None:
+        try:
+            args.output.write_text(text, encoding="utf-8")
+        except OSError as exc:
+            print(
+                f"eventlens: error: could not write the report to {args.output}: "
+                f"{exc.strerror or exc}",
+                file=sys.stderr,
+            )
+            return EXIT_ERROR
+    else:
+        sys.stdout.write(text)
     return EXIT_OK
 
 
