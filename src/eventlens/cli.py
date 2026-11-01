@@ -13,12 +13,15 @@ from eventlens import __version__
 from eventlens.analyzer import analyze
 from eventlens.models import Event
 from eventlens.report import render
+from eventlens.report_json import render_json
+from eventlens.report_markdown import render_markdown
 from eventlens.sources import DEFAULT_CHANNELS, SourceError, read_file, read_live
 
 DEFAULT_DAYS = 7
 MAX_DAYS = 36500  # 100 years: more than any log holds, and well inside the datetime range
 DEFAULT_MAX_EVENTS = 5000
 DEFAULT_TOP = 10
+FORMATS = ("text", "json", "markdown")
 
 EXIT_OK = 0
 EXIT_ERROR = 2
@@ -91,6 +94,12 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="N",
         help=f"most unrecognised event types to list (default: {DEFAULT_TOP})",
     )
+    parser.add_argument(
+        "--format",
+        choices=FORMATS,
+        default="text",
+        help="report format (default: text); json always uses UTC and lists everything",
+    )
     parser.add_argument("--utc", action="store_true", help="show times in UTC")
     parser.add_argument(
         "--verbose", action="store_true", help="show the latest raw event for each finding"
@@ -141,7 +150,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         since=window_end - timedelta(days=args.days),
         include_warnings=args.include_warnings,
     )
-    sys.stdout.write(render(analysis, top=args.top, utc=args.utc, verbose=args.verbose))
+    if args.format == "json":
+        text = render_json(analysis, verbose=args.verbose)
+    elif args.format == "markdown":
+        text = render_markdown(analysis, top=args.top, utc=args.utc, verbose=args.verbose)
+    else:
+        text = render(analysis, top=args.top, utc=args.utc, verbose=args.verbose)
+    sys.stdout.write(text)
     return EXIT_OK
 
 

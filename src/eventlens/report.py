@@ -34,7 +34,7 @@ class Clock:
         return "UTC" if self.utc else (self.convert(moment).tzname() or "local time")
 
 
-def _times(count: int) -> str:
+def times(count: int) -> str:
     return "1 time" if count == 1 else f"{count:,} times"
 
 
@@ -89,7 +89,7 @@ def _sample_text(finding: Finding) -> str | None:
 
 def _finding_block(finding: Finding, clock: Clock, verbose: bool) -> list[str]:
     left = f"{finding.severity.label:<9} {finding.rule.title}"
-    right = _times(finding.count)
+    right = times(finding.count)
     if finding.last is not None:
         right += f", last {clock.short(finding.last)}"
     gap = WIDTH - len(left) - len(right)
@@ -114,7 +114,7 @@ def _normal_section(analysis: Analysis) -> list[str]:
         return []
     lines = ["Normal activity (no action needed)"]
     for finding in analysis.normal:
-        text = f"- {finding.rule.title}: {_times(finding.count)}"
+        text = f"- {finding.rule.title}: {times(finding.count)}"
         lines += textwrap.wrap(text, width=WIDTH, initial_indent="  ", subsequent_indent="    ")
         if finding.details:
             lines += _detail_lines(finding, indent=6)
@@ -130,7 +130,7 @@ def _unrecognised_section(analysis: Analysis, top: int) -> list[str]:
     lines = [f"Not yet recognised (top {len(shown)} of {len(groups)} event types)"]
     for group in shown:
         name = f"{group.provider} {group.event_id} ({group.level.label})"
-        count = _times(group.count)
+        count = times(group.count)
         gap = WIDTH - 4 - len(name) - len(count)
         if gap >= 2:
             lines.append(f"  - {name}{' ' * gap}{count}")
@@ -144,7 +144,7 @@ def _unrecognised_section(analysis: Analysis, top: int) -> list[str]:
     return lines
 
 
-def _computer_text(computers: list[str]) -> str:
+def computer_text(computers: list[str]) -> str:
     if not computers:
         return "unknown computer"
     if len(computers) == 1:
@@ -156,7 +156,7 @@ def _computer_text(computers: list[str]) -> str:
 def render(analysis: Analysis, top: int = 10, utc: bool = False, verbose: bool = False) -> str:
     """Return the full report as a string ending in a newline."""
     clock = Clock(utc)
-    lines = _wrap(f"EventLens report for {_computer_text(analysis.computers)}", indent=4)
+    lines = _wrap(f"EventLens report for {computer_text(analysis.computers)}", indent=4)
 
     if analysis.start is None or analysis.end is None:
         if analysis.events_read:
