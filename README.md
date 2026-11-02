@@ -66,10 +66,21 @@ Errors EventLens doesn't recognise yet are listed at the end by source and ID (t
 | `--days N` | Look at the last N days (1 to 36500, default 7). For files, counted back from the newest event in the file. |
 | `--channel NAME` | Live mode only: which log to read (default: System and Application) |
 | `--include-warnings` | Also list warnings EventLens doesn't recognise yet, not just errors |
+| `--format FORMAT` | `text` (default), `markdown` (for tickets and chat), or `json` (for scripts) |
+| `--color MODE` | `auto` (default: colour a terminal, unless `NO_COLOR` is set), `always`, or `never` |
+| `--output FILE` | Write the report to a file instead of printing it |
+| `--fail-on SEVERITY` | Exit with code 1 if any problem is at least `low`, `medium`, `high`, or `critical` |
 | `--utc` | Show times in UTC instead of local time |
 | `--verbose` | Show the latest raw event behind each finding |
 
-Run `eventlens --help` for all of them. Exit code 0 means a report was produced; 2 means bad arguments or an unreadable log.
+Run `eventlens --help` for all of them. Exit code 0 means a report was produced; 1 means `--fail-on` found a problem at or above the severity you chose (the report is still produced); 2 means bad arguments, an unreadable log, or a report file that couldn't be written.
+
+For example, to save a Markdown report for a ticket, or to fail a script on serious problems:
+
+```bash
+uv run eventlens --file system.evtx --format markdown --output report.md
+uv run eventlens --file system.evtx --format json --fail-on high > report.json
+```
 
 ## How it works
 
@@ -91,7 +102,7 @@ The design, the decisions behind it, and the sample report are written up in [SP
 
 **Tested**
 
-- 167 automated tests, run on Windows, macOS, and Linux with Python 3.11 and 3.13 on every change. One test compares the whole report for the sample week against a saved copy.
+- 237 automated tests, run on Windows, macOS, and Linux with Python 3.11 and 3.13 on every change. One test compares the whole report for the sample week against a saved copy.
 - **Live mode on real Windows:** GitHub's Windows runners read the real System log through `wevtutil`, and write an event with accented and Japanese text and read it back intact.
 - **A real log:** I also ran it on a real 1,881-event Windows 10 System log from 2017 (a sample from the [evtx project](https://github.com/omerbenamram/evtx); not included here). Service names, drive paths, and update titles and error codes all came through correctly.
 
@@ -112,7 +123,7 @@ The design, the decisions behind it, and the sample report are written up in [SP
 The plan is in [SPEC.md](SPEC.md#10-roadmap). In short:
 
 - [x] **M0 and M1:** read `.evtx`, `.xml`, and live logs; the catalog; crash incidents; the plain-text report
-- [ ] **M2:** JSON and Markdown output, colour, and exit codes that scripts can check
+- [x] **M2:** JSON and Markdown output, colour, a report file, and exit codes that scripts can check
 - [ ] **M3:** power diagnostics (battery wear, sleep and wake problems)
 - [ ] **M4:** a timeline of boots and shutdowns, and what happened before each crash
 - [ ] **M5:** a bigger catalog kept in a data file, with noisy services handled
@@ -126,6 +137,13 @@ uv run pytest      # run the tests
 uv run ruff check  # check code style
 ```
 
+CI also builds the wheel, installs it in a clean environment, and runs the real `eventlens` command on the sample log in every output format. To run the same check yourself:
+
+```bash
+uv build --wheel
+scripts/smoke_test.sh dist/eventlens-*.whl
+```
+
 The two tests that run the real `wevtutil` only run on Windows in CI, because they write an event to the log.
 
 - After an intended change to the report, regenerate the saved copy with `EVENTLENS_UPDATE_GOLDEN=1 uv run pytest tests/test_report.py`.
@@ -133,7 +151,7 @@ The two tests that run the real `wevtutil` only run on Windows in CI, because th
 
 ## Privacy
 
-EventLens reads logs and prints a report. Nothing is sent anywhere. Reports can contain the computer name, app names, and file paths, so look over a report before you share it.
+EventLens reads logs and prints a report. Nothing is sent anywhere. Reports (including a saved `--output` file or JSON) can contain the computer name, app names, and file paths, so look over a report before you share it.
 
 ## License
 

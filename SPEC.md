@@ -1,6 +1,6 @@
 # EventLens specification
 
-Status: **agreed**. v1 (milestone M1) is implemented.
+Status: **agreed**. v1 (milestone M1) and the output options (M2) are implemented.
 
 ## 1. What EventLens is
 
@@ -50,7 +50,8 @@ Already built in `sources.py` (milestone M0).
 
 ```
 eventlens [--file PATH]... [--channel NAME]... [--days N] [--max-events N]
-          [--include-warnings] [--top N] [--utc] [--verbose] [--version]
+          [--include-warnings] [--top N] [--format FORMAT] [--color MODE]
+          [--output FILE] [--fail-on SEVERITY] [--utc] [--verbose] [--version]
 ```
 
 | Option | Default | Meaning |
@@ -61,7 +62,11 @@ eventlens [--file PATH]... [--channel NAME]... [--days N] [--max-events N]
 | `--max-events N` | 5000 per channel | Live mode only: cap on events read, newest first. |
 | `--include-warnings` | off | Also list unrecognised **warnings** in the "Not yet recognised" section (errors and critical events are always listed). |
 | `--top N` | 10 | Maximum number of unrecognised event types to list. |
-| `--utc` | off | Show times in UTC instead of the local time zone. |
+| `--format FORMAT` | `text` | `text`, `json`, or `markdown` (§7). |
+| `--color MODE` | `auto` | `auto`, `always`, or `never`. Text format only (§7.3). |
+| `--output FILE` | none (stdout) | Write the report to FILE as UTF-8 instead of printing it. Never coloured. |
+| `--fail-on SEVERITY` | none | Exit with code 1 if any problem finding is at least this severe: `low`, `medium`, `high`, or `critical`. |
+| `--utc` | off | Show times in UTC instead of the local time zone. `json` always uses UTC. |
 | `--verbose` | off | Show extra detail: a sample of raw event data for each finding. |
 | `--version` | | Print the version and exit. |
 
@@ -71,10 +76,11 @@ Running `eventlens` with no arguments on Windows analyses the live System and Ap
 
 | Code | Meaning |
 | --- | --- |
-| 0 | Report produced (whether or not problems were found). |
-| 2 | Bad arguments, unreadable input, or live mode on a non-Windows OS. |
+| 0 | Report produced (whether or not problems were found, unless `--fail-on` says otherwise). |
+| 1 | `--fail-on SEVERITY` was given and a problem finding is at or above that severity. The report is still produced. |
+| 2 | Bad arguments, unreadable input, a report file that can't be written, or live mode on a non-Windows OS. Takes priority over 1. |
 
-Exit codes based on findings (for scripts, such as `--fail-on high`) are planned for M2.
+`--fail-on` looks at the severity after escalation (§4). Info findings ("Normal activity") and unrecognised events never trigger it, so `--fail-on low` fails on any problem the report lists as a finding.
 
 ## 4. How analysis works
 
@@ -193,7 +199,7 @@ Kernel-Power 41 stores the code in decimal (`159`) and 1001 stores it as text (`
 
 ## 7. Report format
 
-Plain text, at most 75 columns wide, readable when pasted into an email or ticket. No colour in v1 (planned for M2).
+Plain text, at most 75 columns wide, readable when pasted into an email or ticket. Colour is optional (§7.3). `--format markdown` and `--format json` give the same report in other shapes (§7.1, §7.2).
 
 Sample, abbreviated from the report for [`examples/sample_week.xml`](examples/sample_week.xml), a made-up week on a troubled PC. The full output is in [`tests/fixtures/sample_week_report.txt`](tests/fixtures/sample_week_report.txt), which the tests compare against.
 
@@ -240,6 +246,34 @@ Rules:
 - If no events are in the window, the report says so and suggests a larger `--days`.
 - `--verbose` adds a "Latest event" line to each finding with the raw provider, ID, and event data.
 
+### 7.1 Markdown format
+
+`--format markdown` has the same content as the text report, laid out for GitHub issues, tickets, and chat: a `#` title, a bullet list of logs, period and event counts, the verdict, then one `###` heading per problem finding (`### HIGH: App crashed (6 times, last 7 Oct 19:40)`) with its details and "What it means" / "What to do" as bullets. "Normal activity" and "Not yet recognised" are `##` sections. Times follow `--utc`, `--top` and `--verbose` apply, and values taken from the log are escaped so they can't change the formatting. The report for the sample week is in [`tests/fixtures/sample_week_report.md`](tests/fixtures/sample_week_report.md).
+
+### 7.2 JSON format
+
+`--format json` is for scripts. It writes one JSON object with these fields, and `schema_version` changes only when a field is removed or changes meaning (adding fields does not change it):
+
+| Field | Meaning |
+| --- | --- |
+| `schema_version` | `1` |
+| `eventlens_version` | The version that wrote the report. |
+| `computers`, `channels` | Lists of strings. |
+| `period` | `{"start", "end"}`, or `null` if no events were in the window. |
+| `events_read`, `events_in_window` | Counts. |
+| `verdict`, `headline` | The same sentences as the text report. |
+| `findings` | Problem findings, most important first. |
+| `normal` | Info findings ("Normal activity"), in the same shape. |
+| `unrecognised` | Every unrecognised event type: `provider`, `event_id`, `level` (`critical`, `error`, or `warning`), `count`, `last`. |
+
+Each finding has `id` (the catalog entry's key), `severity` (`critical`, `high`, `medium`, `low`, or `info`), `title`, `count`, `first`, `last`, `details` (a list of `{"detail", "count"}`, most common first), `meaning`, and `action`. With `--verbose` it also has `sample`: `provider`, `event_id`, `time`, and `data` for the latest event.
+
+All times are ISO 8601 in UTC (`2026-10-06T21:02:20Z`), whatever `--utc` says. Unlike the text report, JSON lists every detail and every unrecognised event type, so `--top` has no effect. The output is pure ASCII: non-ASCII text is written as `\uXXXX` escapes, so a redirect or console that uses a legacy code page (common on Windows) can't change what a parser reads.
+
+### 7.3 Colour
+
+`--color auto` (the default) colours the text report only when stdout is a terminal, `NO_COLOR` is not set to a non-empty value, and `TERM` is not `dumb`. On Windows it also asks the console to accept ANSI escapes and stays plain if it won't. `--color always` and `--color never` skip those checks (`always` still never colours a file or the other formats). Severity labels and the verdict are coloured: critical in bold red, high red, medium yellow, low cyan, info dim. The escapes are added after wrapping, so removing them gives exactly the plain report.
+
 ## 8. Privacy and safety
 
 - EventLens only reads logs. It never writes to them, changes settings, or runs anything except `wevtutil` (read-only queries).
@@ -255,6 +289,9 @@ Rules:
 | `catalog.py` | Event catalog and stop codes | Built |
 | `analyzer.py` | Filtering, matching, grouping, incidents, ranking | Built |
 | `report.py` | Text rendering | Built |
+| `report_markdown.py` | Markdown rendering | Built |
+| `report_json.py` | JSON rendering | Built |
+| `color.py` | ANSI colour and the auto-colour decision | Built |
 | `cli.py` | Argument parsing, exit codes, logging setup | Built |
 
 Testing:
@@ -262,11 +299,13 @@ Testing:
 - Unit tests for each module with pytest.
 - A test that every catalog entry is matched by its provider and event ID, and analyzer tests for each crash incident type.
 - [`examples/sample_week.xml`](examples/sample_week.xml): a made-up week covering crash incidents, common problems, harmless noise, unrecognised events, and an event older than the window.
-- A golden-file test comparing the full report for a fixed fixture, with times shown in UTC so the test is stable.
-- CLI tests for the arguments, exit codes, and the non-Windows live-mode message.
+- Golden-file tests comparing the full text and Markdown reports for a fixed fixture, with times shown in UTC so the test is stable.
+- JSON tests for each field, `--verbose`, empty input, and non-ASCII text.
+- Colour tests: removing the escapes gives the plain report, and `auto` / `always` / `never` / `NO_COLOR` / Windows console cases.
+- CLI tests for the arguments, exit codes (including `--fail-on` for each severity and `--output` errors), and the non-Windows live-mode message.
 - CI runs everything on Windows, macOS, and Linux (built in M0).
 
-M1 added no runtime dependencies: `argparse` and the standard library are enough. `ruff` checks code style locally and in CI.
+M1 and M2 added no runtime dependencies: `argparse` and the standard library are enough. `ruff` checks code style locally and in CI.
 
 ## 10. Roadmap
 
@@ -274,7 +313,7 @@ M1 added no runtime dependencies: `argparse` and the standard library are enough
 | --- | --- | --- |
 | **M0 Foundation** | uv project, event model, `.evtx`/`.xml`/live readers, tests, cross-platform CI | Done |
 | **M1 Core report** | Catalog, analyzer, crash incidents, text report, CLI (this spec) | Done |
-| **M2 Output options** | `--format json` and `markdown`, colour in terminals, `--output FILE`, `--fail-on SEVERITY` exit codes | Next |
+| **M2 Output options** | `--format json` and `markdown`, colour in terminals, `--output FILE`, `--fail-on SEVERITY` exit codes (§3, §7) | Done |
 | **M3 Power diagnostics** | Parse `powercfg /batteryreport /xml` (battery wear and capacity history), `/sleepstudy` and sleep/wake events (Kernel-Power 42, 107, 506, 507) to explain battery drain and failed sleep | Planned |
 | **M4 Timeline** | Boot and shutdown sessions (Kernel-General 12/13, EventLog 6005/6006), uptime, and "what happened in the minutes before each crash" | Planned |
 | **M5 Catalog growth** | Move the catalog to a data file (TOML) so new events can be added without code; more events; handle services that log errors routinely (see the README's known limitations); optional Security log | Planned |

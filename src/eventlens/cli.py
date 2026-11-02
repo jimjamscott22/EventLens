@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from collections.abc import Sequence
 from datetime import datetime, timedelta, timezone
@@ -11,16 +12,25 @@ from pathlib import Path
 
 from eventlens import __version__
 from eventlens.analyzer import analyze
+from eventlens.catalog import Severity
+from eventlens.color import COLOR_MODES, should_color
 from eventlens.models import Event
 from eventlens.report import render
+from eventlens.report_json import render_json
+from eventlens.report_markdown import render_markdown
 from eventlens.sources import DEFAULT_CHANNELS, SourceError, read_file, read_live
 
 DEFAULT_DAYS = 7
 MAX_DAYS = 36500  # 100 years: more than any log holds, and well inside the datetime range
 DEFAULT_MAX_EVENTS = 5000
 DEFAULT_TOP = 10
+FORMATS = ("text", "json", "markdown")
+
+# Severities --fail-on accepts. Info is left out: it is never a problem.
+FAIL_ON_LEVELS = ("low", "medium", "high", "critical")
 
 EXIT_OK = 0
+EXIT_FINDINGS = 1  # --fail-on found a problem at or above the chosen severity
 EXIT_ERROR = 2
 
 
@@ -91,6 +101,36 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="N",
         help=f"most unrecognised event types to list (default: {DEFAULT_TOP})",
     )
+    parser.add_argument(
+        "--format",
+        choices=FORMATS,
+        default="text",
+        help="report format (default: text); json always uses UTC and lists everything",
+    )
+    parser.add_argument(
+        "--color",
+        choices=COLOR_MODES,
+        default="auto",
+        help=(
+            "colour the text report (default: auto, which colours a terminal "
+            "unless NO_COLOR is set)"
+        ),
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        metavar="FILE",
+        help="write the report to FILE (UTF-8) instead of printing it",
+    )
+    parser.add_argument(
+        "--fail-on",
+        choices=FAIL_ON_LEVELS,
+        metavar="SEVERITY",
+        help=(
+            "exit with code 1 if any problem is at least this severe "
+            f"({', '.join(FAIL_ON_LEVELS)}); the report is still produced"
+        ),
+    )
     parser.add_argument("--utc", action="store_true", help="show times in UTC")
     parser.add_argument(
         "--verbose", action="store_true", help="show the latest raw event for each finding"
@@ -141,7 +181,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         since=window_end - timedelta(days=args.days),
         include_warnings=args.include_warnings,
     )
-    sys.stdout.write(render(analysis, top=args.top, utc=args.utc, verbose=args.verbose))
+    if args.format == "json":
+        text = render_json(analysis, verbose=args.verbose)
+    elif args.format == "markdown":
+        text = render_markdown(analysis, top=args.top, utc=args.utc, verbose=args.verbose)
+    else:
+        # Only colour what goes to a screen, never a file.
+        use_color = args.output is None and should_color(args.color, sys.stdout, os.environ)
+        text = render(analysis, top=args.top, utc=args.utc, verbose=args.verbose, color=use_color)
+    if args.output is not None:
+        try:
+            args.output.write_text(text, encoding="utf-8")
+        except OSError as exc:
+            print(
+                f"eventlens: error: could not write the report to {args.output}: "
+                f"{exc.strerror or exc}",
+                file=sys.stderr,
+            )
+            return EXIT_ERROR
+    else:
+        sys.stdout.write(text)
+
+    if args.fail_on is not None:
+        threshold = Severity[args.fail_on.upper()]
+        if any(finding.severity >= threshold for finding in analysis.problems):
+            return EXIT_FINDINGS
     return EXIT_OK
 
 
