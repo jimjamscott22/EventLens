@@ -8,6 +8,7 @@ from datetime import datetime, timezone
 from eventlens import __version__
 from eventlens.analyzer import Analysis, Finding
 from eventlens.models import Event
+from eventlens.power import Battery
 
 SCHEMA_VERSION = 1
 
@@ -46,7 +47,9 @@ def _finding(finding: Finding, verbose: bool) -> dict:
     return result
 
 
-def render_json(analysis: Analysis, verbose: bool = False) -> str:
+def render_json(
+    analysis: Analysis, verbose: bool = False, batteries: list[Battery] | None = None
+) -> str:
     """Return the report as JSON ending in a newline.
 
     Unlike the text report, this lists every detail and every unrecognised
@@ -80,4 +83,18 @@ def render_json(analysis: Analysis, verbose: bool = False) -> str:
             for group in analysis.unrecognised
         ],
     }
+    if batteries is not None:
+        document["batteries"] = [
+            {
+                "name": b.name,
+                "severity": b.severity.name.lower(),
+                "design_capacity_mwh": b.design_capacity,
+                "full_charge_capacity_mwh": b.full_charge_capacity,
+                "wear_percent": b.wear_percent,
+                "cycle_count": b.cycle_count,
+                "summary": b.summary,
+                "action": b.advice,
+            }
+            for b in batteries
+        ]
     return json.dumps(document, indent=2) + "\n"

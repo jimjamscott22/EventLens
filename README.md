@@ -10,7 +10,7 @@ A command-line tool that reads Windows event logs and turns them into a plain-En
 
 Windows records everything that goes wrong, but Event Viewer shows thousands of entries with cryptic sources and numeric IDs, and most of them are harmless. EventLens reads the System and Application logs, picks out the entries that matter, groups the repeats, ranks them by how serious they are, and says what each one means and what to do about it.
 
-It only ever reads logs. It never changes the machine and never connects to the internet. Power diagnostics (battery and sleep reports) are planned but not built yet; see the [roadmap](#roadmap).
+It only ever reads logs. It never changes the machine and never connects to the internet. Power diagnostics are partly built (battery wear and processor throttling); see the [roadmap](#roadmap).
 
 ## Quick start
 
@@ -45,7 +45,7 @@ Then run `eventlens --file system.evtx --file application.evtx` wherever you lik
 
 ## What it reports
 
-EventLens recognises 27 event types, plus 12 common blue screen stop codes, and sorts what it finds into five levels: **Critical**, **High**, **Medium**, **Low**, and **Info**.
+EventLens recognises 31 event types, plus 12 common blue screen stop codes, and sorts what it finds into five levels: **Critical**, **High**, **Medium**, **Low**, and **Info**.
 
 | Area | Examples |
 | --- | --- |
@@ -65,6 +65,7 @@ Errors EventLens doesn't recognise yet are listed at the end by source and ID (t
 | `--file PATH` | Read an exported `.evtx` or `.xml` log (repeat to combine several) |
 | `--days N` | Look at the last N days (1 to 36500, default 7). For files, counted back from the newest event in the file. |
 | `--channel NAME` | Live mode only: which log to read (default: System and Application) |
+| `--battery-report PATH` | Also report battery health from a file made on the PC with `powercfg /batteryreport /xml /output PATH` |
 | `--include-warnings` | Also list warnings EventLens doesn't recognise yet, not just errors |
 | `--format FORMAT` | `text` (default), `markdown` (for tickets and chat), or `json` (for scripts) |
 | `--color MODE` | `auto` (default: colour a terminal, unless `NO_COLOR` is set), `always`, or `never` |
@@ -102,12 +103,13 @@ The design, the decisions behind it, and the sample report are written up in [SP
 
 **Tested**
 
-- 237 automated tests, run on Windows, macOS, and Linux with Python 3.11 and 3.13 on every change. One test compares the whole report for the sample week against a saved copy.
+- 266 automated tests, run on Windows, macOS, and Linux with Python 3.11 and 3.13 on every change. One test compares the whole report for the sample week against a saved copy.
 - **Live mode on real Windows:** GitHub's Windows runners read the real System log through `wevtutil`, and write an event with accented and Japanese text and read it back intact.
 - **A real log:** I also ran it on a real 1,881-event Windows 10 System log from 2017 (a sample from the [evtx project](https://github.com/omerbenamram/evtx); not included here). Service names, drive paths, and update titles and error codes all came through correctly.
 
 **Not tested**
 
+- The battery report parser, which has only been run on a hand-written file that follows `powercfg`'s XML layout, not on a real report. The sleep and throttling rules are also untested on real logs.
 - A normal Windows 10 or 11 PC, a standard (non-administrator) user, or a non-English Windows. Live mode has only run on GitHub's Windows runners, which have administrator rights.
 - Logs captured from a PC that actually crashed. The crash handling is tested with made-up events that follow the documented layouts, not with real crash logs.
 - Speed on very large live logs. By default it reads the newest 5,000 events per log.
@@ -116,7 +118,7 @@ The design, the decisions behind it, and the sample report are written up in [SP
 
 - Severity is a rule of thumb. On the real 2017 log, the Windows 10 service *Interactive Services Detection* logged a service error 10 times, which looks like routine noise rather than a fault, yet EventLens reports it as a **High** "Service stopped unexpectedly" and makes it the top issue. The catalog doesn't know which services are noisy yet.
 - Events outside the catalog only show their source and ID, with no explanation.
-- The catalog is small on purpose: 27 event types. It will miss problems that other events record.
+- The catalog is small on purpose: 31 event types. It will miss problems that other events record.
 
 ## Roadmap
 
@@ -124,7 +126,7 @@ The plan is in [SPEC.md](SPEC.md#10-roadmap). In short:
 
 - [x] **M0 and M1:** read `.evtx`, `.xml`, and live logs; the catalog; crash incidents; the plain-text report
 - [x] **M2:** JSON and Markdown output, colour, a report file, and exit codes that scripts can check
-- [ ] **M3:** power diagnostics (battery wear, sleep and wake problems)
+- [ ] **M3:** power diagnostics. Done so far: battery wear from a `powercfg` report, processor throttling, sleep and wake events. Still to do: `/sleepstudy` and battery drain
 - [ ] **M4:** a timeline of boots and shutdowns, and what happened before each crash
 - [ ] **M5:** a bigger catalog kept in a data file, with noisy services handled
 - [ ] **M6:** publish to PyPI, and a standalone Windows `.exe`

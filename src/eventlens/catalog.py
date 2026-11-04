@@ -454,6 +454,38 @@ RULES: tuple[Rule, ...] = (
         detail_label="Names",
     ),
     Rule(
+        key="cpu-throttled",
+        providers=("Microsoft-Windows-Kernel-Processor-Power",),
+        event_ids=(37,),
+        severity=Severity.MEDIUM,
+        title="Processor speed was limited by the firmware",
+        meaning=(
+            "The firmware slowed the processor down, usually because of heat "
+            "or a power limit. The PC feels slow while this happens."
+        ),
+        action=(
+            "Clean the vents and fans, make sure the PC is on a hard surface, "
+            "and use the original charger on a laptop. Update the BIOS if the "
+            "problem continues."
+        ),
+    ),
+    Rule(
+        key="sleep",
+        providers=("Microsoft-Windows-Kernel-Power",),
+        event_ids=(42, 506),
+        severity=Severity.INFO,
+        title="PC went to sleep",
+        meaning="Windows put the PC to sleep (or into connected standby).",
+    ),
+    Rule(
+        key="wake",
+        providers=("Microsoft-Windows-Kernel-Power", "Microsoft-Windows-Power-Troubleshooter"),
+        event_ids=(107, 507, 1),
+        severity=Severity.INFO,
+        title="PC woke from sleep",
+        meaning="The PC resumed from sleep.",
+    ),
+    Rule(
         key="planned-restart",
         providers=("User32",),
         event_ids=(1074,),

@@ -314,7 +314,7 @@ M1 and M2 added no runtime dependencies: `argparse` and the standard library are
 | **M0 Foundation** | uv project, event model, `.evtx`/`.xml`/live readers, tests, cross-platform CI | Done |
 | **M1 Core report** | Catalog, analyzer, crash incidents, text report, CLI (this spec) | Done |
 | **M2 Output options** | `--format json` and `markdown`, colour in terminals, `--output FILE`, `--fail-on SEVERITY` exit codes (§3, §7) | Done |
-| **M3 Power diagnostics** | Parse `powercfg /batteryreport /xml` (battery wear and capacity history), `/sleepstudy` and sleep/wake events (Kernel-Power 42, 107, 506, 507) to explain battery drain and failed sleep | Planned |
+| **M3 Power diagnostics** | Partly done: battery wear via `--battery-report`, Kernel-Processor-Power 37, sleep/wake events (§12). Remaining: sleep study and drain. Parse `powercfg /batteryreport /xml` (battery wear and capacity history), `/sleepstudy` and sleep/wake events (Kernel-Power 42, 107, 506, 507) to explain battery drain and failed sleep | Planned |
 | **M4 Timeline** | Boot and shutdown sessions (Kernel-General 12/13, EventLog 6005/6006), uptime, and "what happened in the minutes before each crash" | Planned |
 | **M5 Catalog growth** | Move the catalog to a data file (TOML) so new events can be added without code; more events; handle services that log errors routinely (see the README's known limitations); optional Security log | Planned |
 | **M6 Distribution** | Publish to PyPI (`uvx eventlens`), plus a standalone Windows `.exe` for people without Python | Planned |
@@ -327,3 +327,9 @@ These were open questions in the first draft. All were settled by keeping the pr
 2. **Crash incident window** is 10 minutes, and a repeated event ID always starts a new incident.
 3. **Default time window** is 7 days.
 4. **Report times** use the local time zone of the machine running EventLens, or UTC with `--utc`.
+
+## 12. Power diagnostics (M3, partly built)
+
+- `--battery-report PATH` reads a file made with `powercfg /batteryreport /xml /output PATH` (`power.py`). For each battery it reports remaining capacity as a percentage of design capacity, and the charge cycle count when present. Wear is graded: under 20% good (info), 20% low, 40% medium, 60% or more high.
+- The battery section is separate from the findings: it does not change the verdict or `--fail-on`. Text and Markdown add a "Battery health" section; JSON adds a `batteries` list (only when the option is given).
+- New catalog rules: Kernel-Processor-Power 37 (processor limited by firmware, Medium); Kernel-Power 42/506 and 107/507 and Power-Troubleshooter 1 (sleep and wake, shown under "Normal activity").

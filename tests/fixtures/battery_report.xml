@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BatteryReport xmlns="http://schemas.microsoft.com/battery/2012">
+  <ReportInformation><ScanTime>2026-10-07T12:00:00Z</ScanTime></ReportInformation>
+  <Batteries>
+    <Battery>
+      <Id>DELL 7XXYZ12</Id>
+      <Chemistry>LiP</Chemistry>
+      <DesignCapacity>50000</DesignCapacity>
+      <FullChargeCapacity>27000</FullChargeCapacity>
+      <CycleCount>612</CycleCount>
+    </Battery>
+  </Batteries>
+</BatteryReport>

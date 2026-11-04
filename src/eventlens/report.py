@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 
 from eventlens.analyzer import Analysis, Finding
 from eventlens.color import paint
+from eventlens.power import Battery
 
 WIDTH = 75
 LABEL_WIDTH = 16
@@ -151,6 +152,23 @@ def _unrecognised_section(analysis: Analysis, top: int) -> list[str]:
     return lines
 
 
+def _battery_section(batteries: list[Battery]) -> list[str]:
+    if not batteries:
+        return []
+    lines = ["Battery health"]
+    for battery in batteries:
+        facts = (
+            f"{battery.health_percent}% of original capacity "
+            f"({battery.full_charge_capacity:,} of {battery.design_capacity:,} mWh)"
+        )
+        if battery.cycle_count:
+            facts += f", {battery.cycle_count:,} charge cycles"
+        lines += _wrap(f"  - {battery.name}: {facts}", indent=4)
+        lines += _wrap(f"    {battery.summary} {battery.advice}".rstrip(), indent=4)
+    lines.append("")
+    return lines
+
+
 def computer_text(computers: list[str]) -> str:
     if not computers:
         return "unknown computer"
@@ -166,6 +184,7 @@ def render(
     utc: bool = False,
     verbose: bool = False,
     color: bool = False,
+    batteries: list[Battery] | None = None,
 ) -> str:
     """Return the full report as a string ending in a newline.
 
@@ -181,6 +200,7 @@ def render(
             lines += ["", "No events found in this period. Try a larger --days value."]
         else:
             lines += ["", "No events found in the input."]
+        lines += ["", *_battery_section(batteries or [])] if batteries else []
         return "\n".join(lines) + "\n"
 
     logs = ", ".join(analysis.channels) or "unknown"
@@ -201,6 +221,7 @@ def render(
         lines += _finding_block(finding, clock, verbose, color)
     lines += _normal_section(analysis)
     lines += _unrecognised_section(analysis, top)
+    lines += _battery_section(batteries or [])
 
     while lines and lines[-1] == "":
         lines.pop()
