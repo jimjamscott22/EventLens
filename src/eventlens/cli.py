@@ -15,6 +15,7 @@ from eventlens.analyzer import analyze
 from eventlens.catalog import Severity
 from eventlens.color import COLOR_MODES, should_color
 from eventlens.models import Event
+from eventlens.power import parse_battery_report
 from eventlens.report import render
 from eventlens.report_json import render_json
 from eventlens.report_markdown import render_markdown
@@ -66,6 +67,15 @@ def build_parser() -> argparse.ArgumentParser:
         type=Path,
         metavar="PATH",
         help="exported .evtx or .xml log to read; repeat to combine logs",
+    )
+    parser.add_argument(
+        "--battery-report",
+        type=Path,
+        metavar="PATH",
+        help=(
+            "also report battery health from a file made with "
+            "'powercfg /batteryreport /xml /output PATH'"
+        ),
     )
     parser.add_argument(
         "--channel",
@@ -171,6 +181,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         reconfigure(errors="replace")
 
     try:
+        batteries = parse_battery_report(args.battery_report) if args.battery_report else None
         events, window_end = _read_events(args)
     except SourceError as exc:
         print(f"eventlens: error: {exc}", file=sys.stderr)
@@ -182,13 +193,22 @@ def main(argv: Sequence[str] | None = None) -> int:
         include_warnings=args.include_warnings,
     )
     if args.format == "json":
-        text = render_json(analysis, verbose=args.verbose)
+        text = render_json(analysis, verbose=args.verbose, batteries=batteries)
     elif args.format == "markdown":
-        text = render_markdown(analysis, top=args.top, utc=args.utc, verbose=args.verbose)
+        text = render_markdown(
+            analysis, top=args.top, utc=args.utc, verbose=args.verbose, batteries=batteries
+        )
     else:
         # Only colour what goes to a screen, never a file.
         use_color = args.output is None and should_color(args.color, sys.stdout, os.environ)
-        text = render(analysis, top=args.top, utc=args.utc, verbose=args.verbose, color=use_color)
+        text = render(
+            analysis,
+            top=args.top,
+            utc=args.utc,
+            verbose=args.verbose,
+            color=use_color,
+            batteries=batteries,
+        )
     if args.output is not None:
         try:
             args.output.write_text(text, encoding="utf-8")
