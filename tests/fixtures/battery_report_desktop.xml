@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='utf-8'?>
+<BatteryReport xmlns="http://schemas.microsoft.com/battery/2012">
+  <ReportInformation>
+    <ReportGuid>00000000-0000-0000-0000-000000000000</ReportGuid>
+    <ReportVersion>1.1</ReportVersion>
+    <ScanTime>2026-11-05T06:17:04Z</ScanTime>
+    <LocalScanTime>2026-11-05T01:17:04</LocalScanTime>
+    <ReportStartTime>2026-10-29T06:17:04Z</ReportStartTime>
+    <LocalReportStartTime>2026-10-29T02:17:04</LocalReportStartTime>
+    <ReportDuration>7</ReportDuration>
+    <UtcOffset>-5:00</UtcOffset>
+  </ReportInformation>
+  <SystemInformation>
+    <ComputerName>TEST-PC</ComputerName>
+    <SystemManufacturer>REDACTED</SystemManufacturer>
+    <SystemProductName>REDACTED</SystemProductName>
+    <BIOSDate>09/18/2025</BIOSDate>
+    <BIOSVersion>REDACTED</BIOSVersion>
+    <OSBuild>26100.1.amd64fre.ge_release.240331-1435</OSBuild>
+    <PlatformRole>Desktop</PlatformRole>
+    <ConnectedStandby>0</ConnectedStandby>
+  </SystemInformation>
+  <Batteries>
+  </Batteries>
+  <RuntimeEstimates>
+    <DesignCapacity>
+      <Capacity>0</Capacity>
+      <ActiveRuntime>PT0S</ActiveRuntime>
+      <ConnectedStandbyRuntime>PT0S</ConnectedStandbyRuntime>
+    </DesignCapacity>
+    <FullChargeCapacity>
+      <Capacity>0</Capacity>
+      <ActiveRuntime>PT0S</ActiveRuntime>
+      <ConnectedStandbyRuntime>PT0S</ConnectedStandbyRuntime>
+    </FullChargeCapacity>
+  </RuntimeEstimates>
+  <RecentUsage>
+    <UsageEntry Timestamp="2026-10-29T06:23:13Z" LocalTimestamp="2026-10-29T02:23:13" Duration="34066606132" Ac="1" EntryType="Active" ChargeCapacity="0" Discharge="0" FullChargeCapacity="0" IsNextOnBattery="0" />
+    <UsageEntry Timestamp="2026-10-29T07:20:00Z" LocalTimestamp="2026-10-29T03:20:00" Duration="743316829964" Ac="1" EntryType="Suspend" ChargeCapacity="0" Discharge="0" FullChargeCapacity="0" IsNextOnBattery="0" />
+  </RecentUsage>
+  <History>
+    <HistoryEntry StartDate="2025-10-13T04:50:43Z" LocalStartDate="2025-10-13T00:50:43" EndDate="2026-02-16T00:39:00Z" LocalEndDate="2026-02-15T19:39:00" DesignCapacity="0" FullChargeCapacity="0" CycleCount="0" ActiveAcTime="P9DT22H28M29S" ActiveDcTime="PT0S" CsAcTime="PT0S" CsDcTime="PT0S" ActiveDcEnergy="0" CsDcEnergy="0" EstimatedDesignActiveTime="PT0S" EstimatedFullChargeActiveTime="PT0S" EstimatedDesignCsTime="PT0S" EstimatedFullChargeCsTime="PT0S" BatteryChanged="0" />
+    <HistoryEntry StartDate="2026-02-16T00:39:00Z" LocalStartDate="2026-02-15T19:39:00" EndDate="2026-03-02T00:35:00Z" LocalEndDate="2026-03-01T19:35:00" DesignCapacity="0" FullChargeCapacity="0" CycleCount="0" ActiveAcTime="P2DT4H12M2S" ActiveDcTime="PT0S" CsAcTime="PT0S" CsDcTime="PT0S" ActiveDcEnergy="0" CsDcEnergy="0" EstimatedDesignActiveTime="PT0S" EstimatedFullChargeActiveTime="PT0S" EstimatedDesignCsTime="PT0S" EstimatedFullChargeCsTime="PT0S" BatteryChanged="0" />
+  </History>
+  <EnergyDrains>
+  </EnergyDrains>
+</BatteryReport>

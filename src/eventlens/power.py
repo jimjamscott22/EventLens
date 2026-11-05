@@ -68,25 +68,28 @@ def _local(tag: str) -> str:
     return tag.rsplit("}", 1)[-1]
 
 
-def _int(node: ET.Element, name: str) -> int | None:
-    for child in node:
-        if _local(child.tag) == name:
-            try:
-                return int((child.text or "").strip())
-            except ValueError:
-                return None
-    return None
-
-
 def _text(node: ET.Element, name: str) -> str:
+    """A value that powercfg may write as an attribute or as a child element."""
+    if name in node.attrib:
+        return node.attrib[name].strip()
     for child in node:
         if _local(child.tag) == name:
             return (child.text or "").strip()
     return ""
 
 
+def _int(node: ET.Element, name: str) -> int | None:
+    try:
+        return int(_text(node, name))
+    except ValueError:
+        return None
+
+
 def parse_battery_report(path: Path) -> list[Battery]:
-    """Read the batteries from a ``powercfg /batteryreport /xml`` file."""
+    """Read the batteries from a ``powercfg /batteryreport /xml`` file.
+
+    Returns an empty list for a PC with no battery, such as a desktop.
+    """
     try:
         data = path.read_bytes()
     except OSError as exc:
@@ -95,6 +98,9 @@ def parse_battery_report(path: Path) -> list[Battery]:
         root = ET.fromstring(data)
     except ET.ParseError as exc:
         raise SourceError(f"{path} is not a valid battery report: {exc}") from exc
+
+    if _local(root.tag) != "BatteryReport":
+        raise SourceError(f"{path} is not a battery report (made by powercfg /batteryreport /xml)")
 
     batteries = []
     for node in root.iter():
@@ -106,6 +112,5 @@ def parse_battery_report(path: Path) -> list[Battery]:
             continue
         name = _text(node, "Id") or f"Battery {len(batteries) + 1}"
         batteries.append(Battery(name, design, full, _int(node, "CycleCount")))
-    if not batteries:
-        raise SourceError(f"no battery found in {path}; is it a battery report?")
+    # A desktop PC has no battery: its report has an empty <Batteries> list.
     return batteries

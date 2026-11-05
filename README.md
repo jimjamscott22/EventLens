@@ -66,6 +66,7 @@ Errors EventLens doesn't recognise yet are listed at the end by source and ID (t
 | `--days N` | Look at the last N days (1 to 36500, default 7). For files, counted back from the newest event in the file. |
 | `--channel NAME` | Live mode only: which log to read (default: System and Application) |
 | `--battery-report PATH` | Also report battery health from a file made on the PC with `powercfg /batteryreport /xml /output PATH` |
+| `--sleepstudy PATH` | Also report sleep and standby problems (battery drain while idle, programs that keep the PC busy) from a file made with `powercfg /sleepstudy /xml /output PATH` in an administrator prompt |
 | `--include-warnings` | Also list warnings EventLens doesn't recognise yet, not just errors |
 | `--format FORMAT` | `text` (default), `markdown` (for tickets and chat), or `json` (for scripts) |
 | `--color MODE` | `auto` (default: colour a terminal, unless `NO_COLOR` is set), `always`, or `never` |

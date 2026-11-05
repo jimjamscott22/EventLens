@@ -39,10 +39,10 @@ def test_bad_files(tmp_path):
     bad.write_text("not xml")
     with pytest.raises(SourceError):
         parse_battery_report(bad)
-    empty = tmp_path / "empty.xml"
-    empty.write_text("<BatteryReport><Batteries/></BatteryReport>")
-    with pytest.raises(SourceError, match="no battery"):
-        parse_battery_report(empty)
+    wrong = tmp_path / "wrong.xml"
+    wrong.write_text("<SleepStudy/>")
+    with pytest.raises(SourceError, match="not a battery report"):
+        parse_battery_report(wrong)
     with pytest.raises(SourceError):
         parse_battery_report(tmp_path / "missing.xml")
 

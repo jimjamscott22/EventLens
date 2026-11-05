@@ -19,6 +19,7 @@ from eventlens.power import parse_battery_report
 from eventlens.report import render
 from eventlens.report_json import render_json
 from eventlens.report_markdown import render_markdown
+from eventlens.sleepstudy import parse_sleepstudy
 from eventlens.sources import DEFAULT_CHANNELS, SourceError, read_file, read_live
 
 DEFAULT_DAYS = 7
@@ -75,6 +76,15 @@ def build_parser() -> argparse.ArgumentParser:
         help=(
             "also report battery health from a file made with "
             "'powercfg /batteryreport /xml /output PATH'"
+        ),
+    )
+    parser.add_argument(
+        "--sleepstudy",
+        type=Path,
+        metavar="PATH",
+        help=(
+            "also report sleep and standby problems from a file made with "
+            "'powercfg /sleepstudy /xml /output PATH' (administrator prompt)"
         ),
     )
     parser.add_argument(
@@ -182,6 +192,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
     try:
         batteries = parse_battery_report(args.battery_report) if args.battery_report else None
+        sleep = parse_sleepstudy(args.sleepstudy) if args.sleepstudy else None
         events, window_end = _read_events(args)
     except SourceError as exc:
         print(f"eventlens: error: {exc}", file=sys.stderr)
@@ -193,10 +204,15 @@ def main(argv: Sequence[str] | None = None) -> int:
         include_warnings=args.include_warnings,
     )
     if args.format == "json":
-        text = render_json(analysis, verbose=args.verbose, batteries=batteries)
+        text = render_json(analysis, verbose=args.verbose, batteries=batteries, sleep=sleep)
     elif args.format == "markdown":
         text = render_markdown(
-            analysis, top=args.top, utc=args.utc, verbose=args.verbose, batteries=batteries
+            analysis,
+            top=args.top,
+            utc=args.utc,
+            verbose=args.verbose,
+            batteries=batteries,
+            sleep=sleep,
         )
     else:
         # Only colour what goes to a screen, never a file.
@@ -208,6 +224,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             verbose=args.verbose,
             color=use_color,
             batteries=batteries,
+            sleep=sleep,
         )
     if args.output is not None:
         try:
