@@ -11,6 +11,8 @@ from eventlens.models import Event
 from eventlens.power import Battery
 from eventlens.power_report import json_data
 from eventlens.sleepstudy import SleepStudy
+from eventlens.timeline import Timeline
+from eventlens.timeline_report import json_data as timeline_json
 
 SCHEMA_VERSION = 1
 
@@ -54,6 +56,7 @@ def render_json(
     verbose: bool = False,
     batteries: list[Battery] | None = None,
     sleep: SleepStudy | None = None,
+    timeline: Timeline | None = None,
 ) -> str:
     """Return the report as JSON ending in a newline.
 
@@ -89,4 +92,6 @@ def render_json(
         ],
     }
     document.update(json_data(batteries, sleep))
+    if timeline is not None:
+        document.update(timeline_json(timeline))
     return json.dumps(document, indent=2) + "\n"

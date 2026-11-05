@@ -66,6 +66,7 @@ Errors EventLens doesn't recognise yet are listed at the end by source and ID (t
 | `--days N` | Look at the last N days (1 to 36500, default 7). For files, counted back from the newest event in the file. |
 | `--channel NAME` | Live mode only: which log to read (default: System and Application) |
 | `--battery-report PATH` | Also report battery health from a file made on the PC with `powercfg /batteryreport /xml /output PATH` |
+| `--timeline` | Also list each boot with how long it ran, how it ended (normal shutdown, crash, or still running), and the warnings and errors logged in the 5 minutes before a crash |
 | `--sleepstudy PATH` | Also report sleep and standby problems (battery drain while idle, programs that keep the PC busy) from a file made with `powercfg /sleepstudy /xml /output PATH` in an administrator prompt |
 | `--include-warnings` | Also list warnings EventLens doesn't recognise yet, not just errors |
 | `--format FORMAT` | `text` (default), `markdown` (for tickets and chat), or `json` (for scripts) |
@@ -128,7 +129,7 @@ The plan is in [SPEC.md](SPEC.md#10-roadmap). In short:
 - [x] **M0 and M1:** read `.evtx`, `.xml`, and live logs; the catalog; crash incidents; the plain-text report
 - [x] **M2:** JSON and Markdown output, colour, a report file, and exit codes that scripts can check
 - [ ] **M3:** power diagnostics. Done so far: battery wear from a `powercfg` report, processor throttling, sleep and wake events. Still to do: `/sleepstudy` and battery drain
-- [ ] **M4:** a timeline of boots and shutdowns, and what happened before each crash
+- [x] **M4:** a timeline of boots and shutdowns (`--timeline`), uptime, and what happened before each crash
 - [ ] **M5:** a bigger catalog kept in a data file, with noisy services handled
 - [ ] **M6:** publish to PyPI, and a standalone Windows `.exe`
 

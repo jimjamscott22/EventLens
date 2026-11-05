@@ -21,6 +21,7 @@ from eventlens.report_json import render_json
 from eventlens.report_markdown import render_markdown
 from eventlens.sleepstudy import parse_sleepstudy
 from eventlens.sources import DEFAULT_CHANNELS, SourceError, read_file, read_live
+from eventlens.timeline import build_timeline
 
 DEFAULT_DAYS = 7
 MAX_DAYS = 36500  # 100 years: more than any log holds, and well inside the datetime range
@@ -151,6 +152,11 @@ def build_parser() -> argparse.ArgumentParser:
             f"({', '.join(FAIL_ON_LEVELS)}); the report is still produced"
         ),
     )
+    parser.add_argument(
+        "--timeline",
+        action="store_true",
+        help="also list each boot with how long it ran, how it ended, and what led up to a crash",
+    )
     parser.add_argument("--utc", action="store_true", help="show times in UTC")
     parser.add_argument(
         "--verbose", action="store_true", help="show the latest raw event for each finding"
@@ -198,13 +204,17 @@ def main(argv: Sequence[str] | None = None) -> int:
         print(f"eventlens: error: {exc}", file=sys.stderr)
         return EXIT_ERROR
 
-    analysis = analyze(
-        events,
-        since=window_end - timedelta(days=args.days),
-        include_warnings=args.include_warnings,
-    )
+    since = window_end - timedelta(days=args.days)
+    analysis = analyze(events, since=since, include_warnings=args.include_warnings)
+    timeline = build_timeline(events, since) if args.timeline else None
     if args.format == "json":
-        text = render_json(analysis, verbose=args.verbose, batteries=batteries, sleep=sleep)
+        text = render_json(
+            analysis,
+            verbose=args.verbose,
+            batteries=batteries,
+            sleep=sleep,
+            timeline=timeline,
+        )
     elif args.format == "markdown":
         text = render_markdown(
             analysis,
@@ -213,6 +223,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             verbose=args.verbose,
             batteries=batteries,
             sleep=sleep,
+            timeline=timeline,
         )
     else:
         # Only colour what goes to a screen, never a file.
@@ -225,6 +236,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             color=use_color,
             batteries=batteries,
             sleep=sleep,
+            timeline=timeline,
         )
     if args.output is not None:
         try:

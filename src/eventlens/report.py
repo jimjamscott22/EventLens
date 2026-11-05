@@ -10,6 +10,8 @@ from eventlens.color import paint
 from eventlens.power import Battery
 from eventlens.power_report import text_lines as power_lines
 from eventlens.sleepstudy import SleepStudy
+from eventlens.timeline import Timeline
+from eventlens.timeline_report import text_lines as timeline_lines
 
 WIDTH = 75
 LABEL_WIDTH = 16
@@ -171,6 +173,7 @@ def render(
     color: bool = False,
     batteries: list[Battery] | None = None,
     sleep: SleepStudy | None = None,
+    timeline: Timeline | None = None,
 ) -> str:
     """Return the full report as a string ending in a newline.
 
@@ -208,6 +211,8 @@ def render(
         lines += _finding_block(finding, clock, verbose, color)
     lines += _normal_section(analysis)
     lines += _unrecognised_section(analysis, top)
+    if timeline is not None:
+        lines += timeline_lines(timeline, clock, top)
     lines += power_lines(batteries, sleep)
 
     while lines and lines[-1] == "":
