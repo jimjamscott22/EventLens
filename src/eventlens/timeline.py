@@ -12,7 +12,7 @@ from collections import Counter
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
-from eventlens.analyzer import _group_incidents, classify_incident
+from eventlens.analyzer import INCIDENT_WINDOW, _group_incidents, classify_incident
 from eventlens.catalog import CRASH_EVENTS, event_key, lookup
 from eventlens.models import Event, Level
 
@@ -20,6 +20,8 @@ BOOT_EVENTS = {("microsoft-windows-kernel-general", 12), ("eventlog", 6005)}
 SHUTDOWN_EVENTS = {("microsoft-windows-kernel-general", 13), ("eventlog", 6006)}
 # Two events this close together describe the same boot or shutdown.
 SAME_MOMENT = timedelta(minutes=2)
+# An incident can be logged a moment before the boot time we worked out.
+CLOCK_SLACK = timedelta(minutes=1)
 # How far back from a crash to look for warnings and errors.
 LEAD_UP = timedelta(minutes=5)
 MAX_LEAD_UP_ITEMS = 5
@@ -102,12 +104,32 @@ def _lead_up(
     return titles.most_common(MAX_LEAD_UP_ITEMS)
 
 
+def _incidents_by_boot(
+    boots: list[datetime], incidents: list[list[Event]]
+) -> dict[datetime, list[Event]]:
+    """Give each crash incident to the one boot that wrote it.
+
+    A crash is logged just after the restart that follows it, so an incident
+    belongs to the latest boot at or before it. Taking the nearest boot for
+    each incident, rather than every incident near each boot, keeps quick
+    successive reboots from sharing one incident.
+    """
+    owner: dict[datetime, list[Event]] = {}
+    for incident in sorted(incidents, key=lambda i: i[0].time):
+        time = incident[0].time
+        earlier = [b for b in boots if b <= time + CLOCK_SLACK]
+        if earlier and time - earlier[-1] <= INCIDENT_WINDOW:
+            owner.setdefault(earlier[-1], incident)
+    return owner
+
+
 def _computer_runs(computer: str, events: list[Event], since: datetime | None) -> list[Run]:
     events = sorted(events, key=lambda e: e.time)
-    boots = [b for b in _moments(events, BOOT_EVENTS) if since is None or b >= since]
+    all_boots = _moments(events, BOOT_EVENTS)
+    boots = [b for b in all_boots if since is None or b >= since]
     shutdowns = _moments(events, SHUTDOWN_EVENTS)
     crash_events = [e for e in events if event_key(e) in CRASH_EVENTS]
-    incidents = _group_incidents(crash_events)
+    by_boot = _incidents_by_boot(all_boots, _group_incidents(crash_events))
 
     runs = []
     for index, start in enumerate(boots):
@@ -123,13 +145,8 @@ def _computer_runs(computer: str, events: list[Event], since: datetime | None) -
             before = [e.time for e in events if start <= e.time < next_boot]
             end = max(before, default=start)
             run = Run(computer, start, end, "crash")
-            nearby = [
-                i
-                for i in incidents
-                if next_boot - SAME_MOMENT <= i[0].time <= next_boot + timedelta(minutes=10)
-            ]
-            if nearby:
-                rule, detail = classify_incident(nearby[0])
+            if next_boot in by_boot:
+                rule, detail = classify_incident(by_boot[next_boot])
                 run.crash_title, run.crash_detail = rule.title, detail
             run.lead_up = _lead_up(events, start, end, next_boot)
             runs.append(run)

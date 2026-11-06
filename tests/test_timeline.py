@@ -157,3 +157,17 @@ def test_information_events_are_not_precursors(make_event):
     ]
     first, _ = build_timeline(events).runs
     assert first.lead_up == []
+
+
+def test_quick_successive_reboots_each_get_their_own_incident(make_event):
+    events = [
+        *boot(make_event, 0),
+        *boot(make_event, 10),
+        *boot(make_event, 12.5),
+        make_event(KP, 41, minutes=10.6, level=Level.CRITICAL, data={"BugcheckCode": "0"}),
+        make_event(KP, 41, minutes=12.6, level=Level.CRITICAL, data={"BugcheckCode": "159"}),
+    ]
+    first, second, third = build_timeline(events).runs
+    assert first.crash_title == "Sudden power loss or hard freeze"
+    assert second.crash_title == "Blue screen crash"
+    assert third.ended_by == "open"
