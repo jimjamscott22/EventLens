@@ -131,3 +131,29 @@ def test_computer_names_differing_in_case_are_one_computer(make_event):
     assert first.ended_by == "clean"
     assert first.uptime == timedelta(minutes=60)
     assert first.computer == second.computer == "TEST-PC"
+
+
+def test_lead_up_stays_inside_the_run(make_event):
+    events = [
+        make_event("Display", 4101, minutes=9, level=Level.WARNING),  # the earlier run's
+        make_event(KG, 12, minutes=0, level=Level.INFORMATION),
+        make_event(KG, 13, minutes=9.5, level=Level.INFORMATION),
+        *boot(make_event, 10),
+        make_event("Some", 5, minutes=11, level=Level.INFORMATION),
+        *boot(make_event, 20),
+    ]
+    clean, crashed, _ = build_timeline(events).runs
+    assert clean.ended_by == "clean"
+    assert crashed.ended_by == "crash"
+    assert crashed.lead_up == []
+
+
+def test_information_events_are_not_precursors(make_event):
+    events = [
+        *boot(make_event, 0),
+        make_event("Audit", 1, minutes=8, level=Level.LOG_ALWAYS),
+        make_event("Audit", 2, minutes=8, level=Level.INFORMATION),
+        *boot(make_event, 10),
+    ]
+    first, _ = build_timeline(events).runs
+    assert first.lead_up == []

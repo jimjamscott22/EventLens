@@ -82,13 +82,21 @@ def _title(event: Event) -> str:
     return rule.title if rule else f"{event.provider} {event.event_id}"
 
 
+PROBLEM_LEVELS = frozenset({Level.CRITICAL, Level.ERROR, Level.WARNING})
+
+
 def _lead_up(
-    events: list[Event], crash_time: datetime, boot_time: datetime
+    events: list[Event], run_start: datetime, crash_time: datetime, boot_time: datetime
 ) -> list[tuple[str, int]]:
-    """The commonest warnings and errors in the minutes before ``crash_time``."""
+    """The commonest warnings and errors in the minutes before ``crash_time``.
+
+    Only events from this run count: a warning logged before ``run_start``
+    belongs to the run before it.
+    """
+    earliest = max(run_start, crash_time - LEAD_UP)
     titles: Counter[str] = Counter()
     for event in events:
-        if crash_time - LEAD_UP <= event.time < boot_time and event.level <= Level.WARNING:
+        if earliest <= event.time < boot_time and event.level in PROBLEM_LEVELS:
             if event_key(event) not in CRASH_EVENTS:
                 titles[_title(event)] += 1
     return titles.most_common(MAX_LEAD_UP_ITEMS)
@@ -123,7 +131,7 @@ def _computer_runs(computer: str, events: list[Event], since: datetime | None) -
             if nearby:
                 rule, detail = classify_incident(nearby[0])
                 run.crash_title, run.crash_detail = rule.title, detail
-            run.lead_up = _lead_up(events, end, next_boot)
+            run.lead_up = _lead_up(events, start, end, next_boot)
             runs.append(run)
     return runs
 
