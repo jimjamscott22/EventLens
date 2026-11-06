@@ -209,11 +209,21 @@ def _sleep_trail(events: list[Event]) -> dict[str, list[tuple[datetime, str, Eve
 
 
 def _asleep_at_crash(
-    incident: list[Event], trail: dict[str, list[tuple[datetime, str, Event]]]
+    incident: list[Event],
+    trail: dict[str, list[tuple[datetime, str, Event]]],
+    after: datetime | None,
 ) -> tuple[datetime, Event] | None:
-    """The sleep event the PC was last in before this crash, if it never woke."""
+    """The sleep event the PC was last in before this crash, if it never woke.
+
+    ``after`` is the start of the computer's previous crash: a sleep from before
+    it belongs to that crash (the PC has restarted since), not this one.
+    """
     start = incident[0].time
-    before = [e for e in trail.get(incident[0].computer.lower(), []) if e[0] < start]
+    before = [
+        e
+        for e in trail.get(incident[0].computer.lower(), [])
+        if e[0] < start and (after is None or e[0] > after)
+    ]
     if before and before[-1][1] == "sleep":
         return before[-1][0], before[-1][2]
     return None
@@ -292,8 +302,11 @@ def analyze(
         finding_for(rule).add(incident[0].time, detail, incident[0])
 
     trail = _sleep_trail(window)
-    for incident in _group_incidents(crash_events):
-        slept = _asleep_at_crash(incident, trail)
+    last_crash: dict[str, datetime] = {}
+    for incident in sorted(_group_incidents(crash_events), key=lambda i: i[0].time):
+        computer = incident[0].computer.lower()
+        slept = _asleep_at_crash(incident, trail, last_crash.get(computer))
+        last_crash[computer] = incident[0].time
         if slept is not None:
             slept_at, sleep_event = slept
             detail = _hours(incident[0].time - slept_at)

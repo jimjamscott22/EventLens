@@ -312,3 +312,15 @@ def test_a_few_quick_wakes_are_normal(make_event):
 
 def test_real_sleeps_are_not_quick_wakes(make_event):
     assert "wakes-immediately" not in _keys(analyze(_sleep_wake_cycles(make_event, 8, 20)))
+
+
+def test_one_sleep_explains_only_the_first_crash_after_it(make_event):
+    power_loss = {"BugcheckCode": "0", "PowerButtonTimestamp": "0"}
+    events = [
+        make_event(KP, 42, minutes=0, level=Level.INFORMATION),
+        make_event(KP, 41, minutes=60, data=power_loss),
+        make_event(KP, 41, minutes=180, data=power_loss),
+    ]
+    finding = next(f for f in analyze(events).findings if f.rule.key == "crash-while-asleep")
+    assert finding.count == 1
+    assert list(finding.details) == ["about 1 hour"]

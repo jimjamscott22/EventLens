@@ -119,3 +119,15 @@ def test_markdown_and_json(capsys):
 def test_top_limits_runs(capsys):
     main(["--file", str(SAMPLE), "--timeline", "--top", "2", "--utc"])
     assert "...and 2 earlier" in capsys.readouterr().out
+
+
+def test_computer_names_differing_in_case_are_one_computer(make_event):
+    events = [
+        make_event(KG, 12, minutes=0, level=Level.INFORMATION, computer="TEST-PC"),
+        make_event(KG, 13, minutes=60, level=Level.INFORMATION, computer="test-pc"),
+        make_event(KG, 12, minutes=70, level=Level.INFORMATION, computer="TEST-PC"),
+    ]
+    first, second = build_timeline(events).runs
+    assert first.ended_by == "clean"
+    assert first.uptime == timedelta(minutes=60)
+    assert first.computer == second.computer == "TEST-PC"

@@ -130,10 +130,12 @@ def _computer_runs(computer: str, events: list[Event], since: datetime | None) -
 
 def build_timeline(events: list[Event], since: datetime | None = None) -> Timeline:
     """Build the boot and shutdown timeline. Boots before ``since`` are left out."""
+    # Names that differ only in case are one computer, as in the main analysis.
     by_computer: dict[str, list[Event]] = {}
     for event in events:
-        by_computer.setdefault(event.computer, []).append(event)
+        by_computer.setdefault(event.computer.lower(), []).append(event)
     runs: list[Run] = []
-    for computer, computer_events in by_computer.items():
-        runs += _computer_runs(computer, computer_events, since)
+    for computer_events in by_computer.values():
+        name = Counter(e.computer for e in computer_events).most_common(1)[0][0]
+        runs += _computer_runs(name, computer_events, since)
     return Timeline(sorted(runs, key=lambda r: r.start))
