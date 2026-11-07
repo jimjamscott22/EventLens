@@ -59,8 +59,8 @@ def build_parser() -> argparse.ArgumentParser:
         prog="eventlens",
         description=(
             "Explain what went wrong on a Windows PC, in plain English, from its "
-            "event logs. With no --file, reads the live System and Application "
-            "logs (Windows only)."
+            "event logs or a SleepStudy report. With neither --file nor --sleepstudy, "
+            "reads the live System and Application logs (Windows only)."
         ),
     )
     parser.add_argument(
@@ -188,6 +188,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.file and (args.channel or args.max_events):
         parser.error("--channel and --max-events only apply to live logs, not --file")
+    standalone = args.sleepstudy is not None and not args.file and not args.channel
+    if standalone and (args.max_events or args.timeline):
+        parser.error('--max-events and --timeline require event logs (--file or --channel)')
 
     logging.basicConfig(format="eventlens: warning: %(message)s", level=logging.WARNING)
     # Event data can contain any character; never crash on a console that
@@ -199,7 +202,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         batteries = parse_battery_report(args.battery_report) if args.battery_report else None
         sleep = parse_sleepstudy(args.sleepstudy) if args.sleepstudy else None
-        events, window_end = _read_events(args)
+        events, window_end = ([], datetime.now(timezone.utc)) if standalone else _read_events(args)
     except SourceError as exc:
         print(f"eventlens: error: {exc}", file=sys.stderr)
         return EXIT_ERROR
@@ -214,6 +217,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             batteries=batteries,
             sleep=sleep,
             timeline=timeline,
+            event_logs_read=not standalone,
         )
     elif args.format == "markdown":
         text = render_markdown(
@@ -224,6 +228,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             batteries=batteries,
             sleep=sleep,
             timeline=timeline,
+            event_logs_read=not standalone,
         )
     else:
         # Only colour what goes to a screen, never a file.
@@ -237,6 +242,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             batteries=batteries,
             sleep=sleep,
             timeline=timeline,
+            event_logs_read=not standalone,
         )
     if args.output is not None:
         try:

@@ -174,6 +174,7 @@ def render(
     batteries: list[Battery] | None = None,
     sleep: SleepStudy | None = None,
     timeline: Timeline | None = None,
+    event_logs_read: bool = True,
 ) -> str:
     """Return the full report as a string ending in a newline.
 
@@ -181,6 +182,9 @@ def render(
     the escape sequences gives exactly the plain report.
     """
     clock = Clock(utc)
+    if not event_logs_read:
+        lines = ['EventLens sleep diagnostics', 'Event logs were not analyzed.', '']
+        return '\n'.join(lines + power_lines(batteries, sleep)).rstrip() + '\n'
     lines = _wrap(f"EventLens report for {computer_text(analysis.computers)}", indent=4)
 
     if analysis.start is None or analysis.end is None:

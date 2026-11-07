@@ -57,6 +57,7 @@ def render_json(
     batteries: list[Battery] | None = None,
     sleep: SleepStudy | None = None,
     timeline: Timeline | None = None,
+    event_logs_read: bool = True,
 ) -> str:
     """Return the report as JSON ending in a newline.
 
@@ -91,6 +92,12 @@ def render_json(
             for group in analysis.unrecognised
         ],
     }
+    if not event_logs_read:
+        document = {
+            'schema_version': SCHEMA_VERSION,
+            'eventlens_version': __version__,
+            'report_type': 'sleep_diagnostics',
+        }
     document.update(json_data(batteries, sleep))
     if timeline is not None:
         document.update(timeline_json(timeline))

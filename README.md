@@ -67,7 +67,7 @@ Errors EventLens doesn't recognise yet are listed at the end by source and ID (t
 | `--channel NAME` | Live mode only: which log to read (default: System and Application) |
 | `--battery-report PATH` | Also report battery health from a file made on the PC with `powercfg /batteryreport /xml /output PATH` |
 | `--timeline` | Also list each boot with how long it ran, how it ended (normal shutdown, crash, or still running), and the warnings and errors logged in the 5 minutes before a crash |
-| `--sleepstudy PATH` | Also report sleep and standby problems (battery drain while idle, programs that keep the PC busy) from a file made with `powercfg /sleepstudy /xml /output PATH` in an administrator prompt |
+| `--sleepstudy PATH` | Report sleep and standby problems from `powercfg /sleepstudy /xml /output PATH`; works standalone or alongside event logs |
 | `--include-warnings` | Also list warnings EventLens doesn't recognise yet, not just errors |
 | `--format FORMAT` | `text` (default), `markdown` (for tickets and chat), or `json` (for scripts) |
 | `--color MODE` | `auto` (default: colour a terminal, unless `NO_COLOR` is set), `always`, or `never` |
@@ -77,6 +77,14 @@ Errors EventLens doesn't recognise yet are listed at the end by source and ID (t
 | `--verbose` | Show the latest raw event behind each finding |
 
 Run `eventlens --help` for all of them. Exit code 0 means a report was produced; 1 means `--fail-on` found a problem at or above the severity you chose (the report is still produced); 2 means bad arguments, an unreadable log, or a report file that couldn't be written.
+
+`eventlens --sleepstudy sleepstudy.xml` works offline on any OS without reading
+live logs. Add `--file system.evtx` to combine exported logs, or `--channel System`
+to explicitly read live Windows logs. Standalone reports contain sleep diagnostics
+without an event-log verdict; sleep results never trigger `--fail-on`.
+`--timeline` and `--max-events` require event logs. JSON standalone output has
+`report_type: "sleep_diagnostics"`, version fields and `sleep_study`, plus
+`batteries` if requested; event-only fields are absent.
 
 For example, to save a Markdown report for a ticket, or to fail a script on serious problems:
 
@@ -99,7 +107,7 @@ uv run eventlens --file system.evtx --format json --fail-on high > report.json
 4. **Combine crashes**: one crash leaves two or three events when the PC restarts. Counting each would triple-count it, so different crash events from the same computer within 10 minutes become one incident: a blue screen, a forced power-off, or a power loss. The same event twice means two separate restarts, so two crashes in quick succession are counted as two.
 5. **Rank and render** (`report.py`): findings are ordered by severity, then count, then recency, and written as plain text that fits in 75 columns, so it pastes cleanly into an email or ticket.
 
-The design, the decisions behind it, and the sample report are written up in [SPEC.md](SPEC.md).
+The design, the decisions behind it, and the sample report are written up in [SPEC.md](docs/SPEC.md).
 
 ## What has and hasn't been tested
 
@@ -124,11 +132,11 @@ The design, the decisions behind it, and the sample report are written up in [SP
 
 ## Roadmap
 
-The plan is in [SPEC.md](SPEC.md#10-roadmap). In short:
+The plan is in [SPEC.md](docs/SPEC.md#10-roadmap). In short:
 
 - [x] **M0 and M1:** read `.evtx`, `.xml`, and live logs; the catalog; crash incidents; the plain-text report
 - [x] **M2:** JSON and Markdown output, colour, a report file, and exit codes that scripts can check
-- [ ] **M3:** power diagnostics. Done so far: battery wear from a `powercfg` report, processor throttling, sleep and wake events. Still to do: `/sleepstudy` and battery drain
+- [ ] **M3:** power diagnostics. Built: battery wear, processor throttling, sleep/wake analysis, and SleepStudy drain/offender reports. Remaining: battery capacity history, broader report compatibility, and validation with real laptop battery data.
 - [x] **M4:** a timeline of boots and shutdowns (`--timeline`), uptime, and what happened before each crash
 - [ ] **M5:** a bigger catalog kept in a data file, with noisy services handled
 - [ ] **M6:** publish to PyPI, and a standalone Windows `.exe`

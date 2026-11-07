@@ -11,6 +11,7 @@ zero on a PC with no battery, such as a desktop.
 
 from __future__ import annotations
 
+import math
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -42,9 +43,9 @@ class Session:
     start: datetime
     duration: timedelta
     on_ac: bool
-    entry_capacity: int
-    exit_capacity: int
-    full_capacity: int
+    entry_capacity: int | None
+    exit_capacity: int | None
+    full_capacity: int | None
     enter_reason: str
     exit_reason: str
     offenders: tuple[Offender, ...]
@@ -52,7 +53,17 @@ class Session:
     @property
     def drain_percent_per_hour(self) -> float | None:
         """None when the session was on AC power, on a PC with no battery, or too short."""
-        if self.on_ac or self.full_capacity <= 0 or self.duration < MIN_SESSION:
+        if (
+            self.on_ac
+            or not self.full_capacity
+            or self.full_capacity < 0
+            or self.entry_capacity is None
+            or self.exit_capacity is None
+            or self.entry_capacity < self.exit_capacity
+            or self.exit_capacity < 0
+            or self.duration < MIN_SESSION
+            or self.kind not in ("Screen Off", "Sleep", "Standby")
+        ):
             return None
         lost = max(self.entry_capacity - self.exit_capacity, 0)
         hours = self.duration.total_seconds() / 3600
@@ -139,11 +150,11 @@ def _local(tag: str) -> str:
     return tag.rsplit("}", 1)[-1]
 
 
-def _int(node: ET.Element, name: str) -> int:
+def _int(node: ET.Element, name: str) -> int | None:
     try:
-        return int(node.get(name, "0"))
+        return int(node.get(name, ""))
     except ValueError:
-        return 0
+        return None
 
 
 def _reason(text: str) -> str:
@@ -170,7 +181,12 @@ def _offenders(scenario: ET.Element) -> tuple[Offender, ...]:
         except ValueError:
             continue
         name = node.get("Name", "").strip()
-        if name and name.lower() not in NOT_CULPRITS and percent >= OFFENDER_MIN_PERCENT:
+        if (
+            name
+            and name.lower() not in NOT_CULPRITS
+            and math.isfinite(percent)
+            and OFFENDER_MIN_PERCENT <= percent <= 100
+        ):
             found[name] = max(percent, found.get(name, 0.0))
     return tuple(Offender(n, p) for n, p in sorted(found.items(), key=lambda i: -i[1]))
 
@@ -196,12 +212,20 @@ def parse_sleepstudy(path: Path) -> SleepStudy:
             start = parse_time(node.get("TimeStamp", ""))
         except ValueError:
             continue
+        ticks = _int(node, "Duration")
+        if ticks is None or ticks < 0:
+            raise SourceError(f"{path}: missing or invalid SleepStudy session Duration")
+        try:
+            duration = timedelta(microseconds=ticks / 10)
+            _ = start + duration
+        except (OverflowError, ValueError) as exc:
+            raise SourceError(f"{path}: SleepStudy session duration out of range") from exc
         sessions.append(
             Session(
                 kind=node.get("Type", "").strip() or "Unknown",
                 start=start,
-                duration=timedelta(microseconds=_int(node, "Duration") / 10),
-                on_ac=node.get("Ac") == "1",
+                duration=duration,
+                on_ac=node.get("Ac") != "0",
                 entry_capacity=_int(node, "EntryRemainingCapacity"),
                 exit_capacity=_int(node, "ExitRemainingCapacity"),
                 full_capacity=_int(node, "EntryFullCapacity") or _int(node, "FullChargeCapacity"),

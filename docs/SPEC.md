@@ -314,7 +314,7 @@ M1 and M2 added no runtime dependencies: `argparse` and the standard library are
 | **M0 Foundation** | uv project, event model, `.evtx`/`.xml`/live readers, tests, cross-platform CI | Done |
 | **M1 Core report** | Catalog, analyzer, crash incidents, text report, CLI (this spec) | Done |
 | **M2 Output options** | `--format json` and `markdown`, colour in terminals, `--output FILE`, `--fail-on SEVERITY` exit codes (§3, §7) | Done |
-| **M3 Power diagnostics** | Partly done: battery wear via `--battery-report`, Kernel-Processor-Power 37, sleep/wake events (§12). Remaining: sleep study and drain. Parse `powercfg /batteryreport /xml` (battery wear and capacity history), `/sleepstudy` and sleep/wake events (Kernel-Power 42, 107, 506, 507) to explain battery drain and failed sleep | Planned |
+| **M3 Power diagnostics** | Built: battery wear, processor throttling, sleep/wake analysis, and SleepStudy drain/offender reports (§12). Remaining: capacity history, broader report compatibility, and real laptop battery validation | In progress |
 | **M4 Timeline** | Boot and shutdown sessions (Kernel-General 12/13, EventLog 6005/6006), uptime, and "what happened in the minutes before each crash" | Done (§13) |
 | **M5 Catalog growth** | Move the catalog to a data file (TOML) so new events can be added without code; more events; handle services that log errors routinely (see the README's known limitations); optional Security log | Planned |
 | **M6 Distribution** | Publish to PyPI (`uvx eventlens`), plus a standalone Windows `.exe` for people without Python | Planned |
@@ -333,6 +333,23 @@ These were open questions in the first draft. All were settled by keeping the pr
 - `--battery-report PATH` reads a file made with `powercfg /batteryreport /xml /output PATH` (`power.py`). For each battery it reports remaining capacity as a percentage of design capacity, and the charge cycle count when present. Wear is graded: under 20% good (info), 20% low, 40% medium, 60% or more high.
 - The battery section is separate from the findings: it does not change the verdict or `--fail-on`. Text and Markdown add a "Battery health" section; JSON adds a `batteries` list (only when the option is given).
 - New catalog rules: Kernel-Processor-Power 37 (processor limited by firmware, Medium); Kernel-Power 42/506 and 107/507 and Power-Troubleshooter 1 (sleep and wake, shown under "Normal activity").
+
+### SleepStudy follow-up behavior
+
+`--sleepstudy PATH` alone skips event-log reads on every OS. Explicit `--file`
+or `--channel` combines sources. Standalone `--timeline` and `--max-events` are
+argument errors. Text/Markdown identify sleep-only diagnostics and omit the event
+verdict; standalone JSON includes `schema_version`, `eventlens_version`,
+`report_type: "sleep_diagnostics"` and the existing `sleep_study` object, plus
+optional `batteries`. Event-only fields are omitted. Combined output is unchanged.
+
+Missing capacity measurements remain unknown internally and are not graded.
+Charging, unknown power sources, invalid capacities and non-idle session types
+are excluded from drain grading. Invalid/missing durations raise a source error.
+Existing 10-minute minimum and 1%/3% per hour thresholds are preserved.
+The stashed legacy parser and its incompatible CLI/API were not restored;
+legacy compatibility remains separate future work. SleepStudy window filtering
+and per-session JSON expansion were not ported in this bounded follow-up.
 
 ## 13. Timeline (M4)
 
