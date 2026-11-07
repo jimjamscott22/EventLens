@@ -3,6 +3,7 @@ import pytest
 from eventlens import catalog
 from eventlens.catalog import (
     CRASH_EVENTS,
+    DERIVED_RULES,
     INCIDENT_RULES,
     RULES,
     Severity,
@@ -40,7 +41,7 @@ def test_describe_unknown_stop_code_falls_back_to_hex():
     assert describe_stop_code(0xABC) == "Stop code 0xABC"
 
 
-@pytest.mark.parametrize("rule", RULES + INCIDENT_RULES, ids=lambda r: r.key)
+@pytest.mark.parametrize("rule", RULES + INCIDENT_RULES + DERIVED_RULES, ids=lambda r: r.key)
 def test_every_rule_is_explained(rule):
     assert rule.title and rule.meaning
     if rule.severity > Severity.INFO:

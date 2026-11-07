@@ -6,7 +6,11 @@ import re
 
 from eventlens.analyzer import Analysis, Finding
 from eventlens.power import Battery
+from eventlens.power_report import markdown_lines as power_lines
 from eventlens.report import MAX_DETAILS, Clock, computer_text, times
+from eventlens.sleepstudy import SleepStudy
+from eventlens.timeline import Timeline
+from eventlens.timeline_report import markdown_lines as timeline_lines
 
 _SPECIAL = re.compile(r"([\\`*_\[\]<>|#~])")
 
@@ -75,29 +79,14 @@ def _unrecognised_section(analysis: Analysis, top: int) -> list[str]:
     return lines
 
 
-def _battery_section(batteries: list[Battery]) -> list[str]:
-    if not batteries:
-        return []
-    lines = ["## Battery health", ""]
-    for battery in batteries:
-        facts = (
-            f"{battery.health_percent}% of original capacity "
-            f"({battery.full_charge_capacity:,} of {battery.design_capacity:,} mWh)"
-        )
-        if battery.cycle_count:
-            facts += f", {battery.cycle_count:,} charge cycles"
-        lines.append(f"- **{escape(battery.name)}:** {facts}")
-        lines.append(f"  - {battery.summary} {battery.advice}".rstrip())
-    lines.append("")
-    return lines
-
-
 def render_markdown(
     analysis: Analysis,
     top: int = 10,
     utc: bool = False,
     verbose: bool = False,
     batteries: list[Battery] | None = None,
+    sleep: SleepStudy | None = None,
+    timeline: Timeline | None = None,
 ) -> str:
     """Return the full report as Markdown ending in a newline."""
     clock = Clock(utc)
@@ -112,7 +101,8 @@ def render_markdown(
             ]
         else:
             lines.append("No events found in the input.")
-        lines += ["", *_battery_section(batteries or [])] if batteries else []
+        extra = power_lines(batteries, sleep)
+        lines += ["", *extra] if extra else []
         return "\n".join(lines) + "\n"
 
     logs = ", ".join(analysis.channels) or "unknown"
@@ -137,7 +127,9 @@ def render_markdown(
         lines += _finding_block(finding, clock, verbose)
     lines += _normal_section(analysis)
     lines += _unrecognised_section(analysis, top)
-    lines += _battery_section(batteries or [])
+    if timeline is not None:
+        lines += timeline_lines(timeline, clock, top)
+    lines += power_lines(batteries, sleep)
 
     while lines and lines[-1] == "":
         lines.pop()

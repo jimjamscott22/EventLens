@@ -565,6 +565,47 @@ POWER_LOSS = Rule(
 
 INCIDENT_RULES = (BLUE_SCREEN, FORCED_POWER_OFF, POWER_LOSS)
 
+# --- Sleep problems worked out from pairs of sleep, wake, and crash events ---
+
+CRASH_WHILE_ASLEEP = Rule(
+    key="crash-while-asleep",
+    providers=(),
+    event_ids=(),
+    severity=Severity.HIGH,
+    title="PC shut down unexpectedly while asleep",
+    meaning=(
+        "The PC went to sleep and never woke up normally: it later started from "
+        "scratch after a crash or power loss. On a laptop the battery usually ran "
+        "flat while asleep; otherwise the PC failed to resume."
+    ),
+    action=(
+        "On a laptop, check the battery health and what drains it in sleep "
+        "(run 'powercfg /sleepstudy /xml' and use --sleepstudy). If it keeps "
+        "happening on mains power, update the BIOS, chipset, and graphics drivers, "
+        "or turn off hybrid sleep and Fast Startup."
+    ),
+    detail_label="Asleep for",
+)
+
+WAKES_IMMEDIATELY = Rule(
+    key="wakes-immediately",
+    providers=(),
+    event_ids=(),
+    severity=Severity.MEDIUM,
+    title="PC keeps waking up right after going to sleep",
+    meaning=(
+        "Something wakes the PC within a couple of minutes of every sleep, so it "
+        "never rests. This wastes battery and can leave a laptop hot in a bag."
+    ),
+    action=(
+        "Run 'powercfg /lastwake' in a command prompt to see what woke the PC. "
+        "Unplug USB devices, and turn off wake permission for the mouse, network "
+        "adapter, or timer it names in Device Manager or Power Options."
+    ),
+)
+
+DERIVED_RULES = (CRASH_WHILE_ASLEEP, WAKES_IMMEDIATELY)
+
 
 def _build_index(rules: tuple[Rule, ...]) -> dict[tuple[str, int], Rule]:
     index: dict[tuple[str, int], Rule] = {}

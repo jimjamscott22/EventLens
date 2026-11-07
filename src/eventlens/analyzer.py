@@ -11,10 +11,12 @@ from eventlens.catalog import (
     BLUE_SCREEN,
     BUGCHECK_1001,
     CRASH_EVENTS,
+    CRASH_WHILE_ASLEEP,
     FORCED_POWER_OFF,
     INCIDENT_RULES,
     KERNEL_POWER_41,
     POWER_LOSS,
+    WAKES_IMMEDIATELY,
     Rule,
     Severity,
     describe_stop_code,
@@ -29,6 +31,10 @@ from eventlens.models import Event, Level
 
 # Crash events this close together come from the same unexpected shutdown.
 INCIDENT_WINDOW = timedelta(minutes=10)
+# A wake this soon after going to sleep means the PC never really rested.
+QUICK_WAKE = timedelta(minutes=2)
+# This many quick wakes in the period is a pattern, not a one-off.
+QUICK_WAKE_MIN = 5
 
 
 @dataclass
@@ -182,6 +188,55 @@ def classify_incident(events: list[Event]) -> tuple[Rule, str | None]:
     return POWER_LOSS, None
 
 
+def _hours(span: timedelta) -> str:
+    minutes = round(span.total_seconds() / 60)
+    if minutes < 60:
+        return f"{minutes} minutes"
+    hours = round(minutes / 60)
+    return f"about {hours} hour{'s' if hours != 1 else ''}"
+
+
+def _sleep_trail(events: list[Event]) -> dict[str, list[tuple[datetime, str, Event]]]:
+    """Each computer's sleep and wake events in time order, as (time, kind, event)."""
+    trail: dict[str, list[tuple[datetime, str, Event]]] = {}
+    for event in events:
+        rule = lookup(event)
+        if rule is not None and rule.key in ("sleep", "wake"):
+            trail.setdefault(event.computer.lower(), []).append((event.time, rule.key, event))
+    for entries in trail.values():
+        entries.sort(key=lambda entry: entry[0])
+    return trail
+
+
+def _asleep_at_crash(
+    incident: list[Event],
+    trail: dict[str, list[tuple[datetime, str, Event]]],
+    after: datetime | None,
+) -> tuple[datetime, Event] | None:
+    """The sleep event the PC was last in before this crash, if it never woke.
+
+    ``after`` is the start of the computer's previous crash: a sleep from before
+    it belongs to that crash (the PC has restarted since), not this one.
+    """
+    start = incident[0].time
+    before = [
+        e
+        for e in trail.get(incident[0].computer.lower(), [])
+        if e[0] < start and (after is None or e[0] > after)
+    ]
+    if before and before[-1][1] == "sleep":
+        return before[-1][0], before[-1][2]
+    return None
+
+
+def _quick_wakes(entries: list[tuple[datetime, str, Event]]) -> list[tuple[datetime, Event]]:
+    quick = []
+    for (t1, kind1, _), (t2, kind2, wake) in zip(entries, entries[1:], strict=False):
+        if kind1 == "sleep" and kind2 == "wake" and t2 - t1 < QUICK_WAKE:
+            quick.append((t2, wake))
+    return quick
+
+
 def _computer_names(events: list[Event]) -> list[str]:
     """Distinct computers, most events first. Names that differ only in case
     count as one computer (matching how crash incidents are grouped), shown
@@ -245,6 +300,22 @@ def analyze(
     for incident in _group_incidents(crash_events):
         rule, detail = classify_incident(incident)
         finding_for(rule).add(incident[0].time, detail, incident[0])
+
+    trail = _sleep_trail(window)
+    last_crash: dict[str, datetime] = {}
+    for incident in sorted(_group_incidents(crash_events), key=lambda i: i[0].time):
+        computer = incident[0].computer.lower()
+        slept = _asleep_at_crash(incident, trail, last_crash.get(computer))
+        last_crash[computer] = incident[0].time
+        if slept is not None:
+            slept_at, sleep_event = slept
+            detail = _hours(incident[0].time - slept_at)
+            finding_for(CRASH_WHILE_ASLEEP).add(incident[0].time, detail, sleep_event)
+    for entries in trail.values():
+        quick = _quick_wakes(entries)
+        if len(quick) >= QUICK_WAKE_MIN:
+            for time, event in quick:
+                finding_for(WAKES_IMMEDIATELY).add(time, None, event)
 
     times = [e.time for e in window]
     return Analysis(

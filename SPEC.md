@@ -315,7 +315,7 @@ M1 and M2 added no runtime dependencies: `argparse` and the standard library are
 | **M1 Core report** | Catalog, analyzer, crash incidents, text report, CLI (this spec) | Done |
 | **M2 Output options** | `--format json` and `markdown`, colour in terminals, `--output FILE`, `--fail-on SEVERITY` exit codes (§3, §7) | Done |
 | **M3 Power diagnostics** | Partly done: battery wear via `--battery-report`, Kernel-Processor-Power 37, sleep/wake events (§12). Remaining: sleep study and drain. Parse `powercfg /batteryreport /xml` (battery wear and capacity history), `/sleepstudy` and sleep/wake events (Kernel-Power 42, 107, 506, 507) to explain battery drain and failed sleep | Planned |
-| **M4 Timeline** | Boot and shutdown sessions (Kernel-General 12/13, EventLog 6005/6006), uptime, and "what happened in the minutes before each crash" | Planned |
+| **M4 Timeline** | Boot and shutdown sessions (Kernel-General 12/13, EventLog 6005/6006), uptime, and "what happened in the minutes before each crash" | Done (§13) |
 | **M5 Catalog growth** | Move the catalog to a data file (TOML) so new events can be added without code; more events; handle services that log errors routinely (see the README's known limitations); optional Security log | Planned |
 | **M6 Distribution** | Publish to PyPI (`uvx eventlens`), plus a standalone Windows `.exe` for people without Python | Planned |
 
@@ -333,3 +333,7 @@ These were open questions in the first draft. All were settled by keeping the pr
 - `--battery-report PATH` reads a file made with `powercfg /batteryreport /xml /output PATH` (`power.py`). For each battery it reports remaining capacity as a percentage of design capacity, and the charge cycle count when present. Wear is graded: under 20% good (info), 20% low, 40% medium, 60% or more high.
 - The battery section is separate from the findings: it does not change the verdict or `--fail-on`. Text and Markdown add a "Battery health" section; JSON adds a `batteries` list (only when the option is given).
 - New catalog rules: Kernel-Processor-Power 37 (processor limited by firmware, Medium); Kernel-Power 42/506 and 107/507 and Power-Troubleshooter 1 (sleep and wake, shown under "Normal activity").
+
+## 13. Timeline (M4)
+
+`--timeline` (off by default, so the standard report is unchanged) adds a "Boots and uptime" section (`timeline.py`). Boots are Kernel-General 12 and EventLog 6005; clean shutdowns are Kernel-General 13 and EventLog 6006; events of the same kind within 2 minutes count once. A run from one boot to the next that has no shutdown event is a crash; its end is taken as the last event logged before the next boot, and the crash kind comes from the same incident logic as the main report. Warnings and errors in the 5 minutes before a crash are summarised (top 5 by count). The last run is "still running or log ends". Boots before the `--days` window are left out, so the first run in a window has its true start but earlier ones are not shown. JSON adds a `timeline` object with `starts`, `crashes`, and `runs`. `--top` limits the runs shown in text and Markdown (newest first).

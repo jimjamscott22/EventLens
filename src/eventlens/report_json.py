@@ -9,6 +9,10 @@ from eventlens import __version__
 from eventlens.analyzer import Analysis, Finding
 from eventlens.models import Event
 from eventlens.power import Battery
+from eventlens.power_report import json_data
+from eventlens.sleepstudy import SleepStudy
+from eventlens.timeline import Timeline
+from eventlens.timeline_report import json_data as timeline_json
 
 SCHEMA_VERSION = 1
 
@@ -48,7 +52,11 @@ def _finding(finding: Finding, verbose: bool) -> dict:
 
 
 def render_json(
-    analysis: Analysis, verbose: bool = False, batteries: list[Battery] | None = None
+    analysis: Analysis,
+    verbose: bool = False,
+    batteries: list[Battery] | None = None,
+    sleep: SleepStudy | None = None,
+    timeline: Timeline | None = None,
 ) -> str:
     """Return the report as JSON ending in a newline.
 
@@ -83,18 +91,7 @@ def render_json(
             for group in analysis.unrecognised
         ],
     }
-    if batteries is not None:
-        document["batteries"] = [
-            {
-                "name": b.name,
-                "severity": b.severity.name.lower(),
-                "design_capacity_mwh": b.design_capacity,
-                "full_charge_capacity_mwh": b.full_charge_capacity,
-                "wear_percent": b.wear_percent,
-                "cycle_count": b.cycle_count,
-                "summary": b.summary,
-                "action": b.advice,
-            }
-            for b in batteries
-        ]
+    document.update(json_data(batteries, sleep))
+    if timeline is not None:
+        document.update(timeline_json(timeline))
     return json.dumps(document, indent=2) + "\n"
