@@ -251,3 +251,76 @@ def test_computers_listed_most_common_first(make_event):
         make_event("A", 1, computer="PC-1"),
     ]
     assert analyze(events).computers == ["PC-1", "PC-2"]
+
+
+# --- Sleep problems ---
+
+KP = "Microsoft-Windows-Kernel-Power"
+
+
+def _keys(analysis):
+    return {f.rule.key for f in analysis.findings}
+
+
+def test_crash_while_asleep(make_event):
+    events = [
+        make_event(KP, 42, minutes=0, level=Level.INFORMATION),
+        make_event(KP, 41, minutes=9 * 60, data={"BugcheckCode": "0", "PowerButtonTimestamp": "0"}),
+    ]
+    analysis = analyze(events)
+    finding = next(f for f in analysis.findings if f.rule.key == "crash-while-asleep")
+    assert finding.severity == Severity.HIGH
+    assert list(finding.details) == ["about 9 hours"]
+    assert "power-loss" in _keys(analysis)  # the crash itself is still reported
+
+
+def test_crash_after_waking_is_not_a_sleep_crash(make_event):
+    events = [
+        make_event(KP, 42, minutes=0, level=Level.INFORMATION),
+        make_event(KP, 107, minutes=60, level=Level.INFORMATION),
+        make_event(KP, 41, minutes=120, data={"BugcheckCode": "0"}),
+    ]
+    assert "crash-while-asleep" not in _keys(analyze(events))
+
+
+def test_sleep_crash_is_per_computer(make_event):
+    events = [
+        make_event(KP, 42, minutes=0, level=Level.INFORMATION, computer="PC-A"),
+        make_event(KP, 41, minutes=60, data={"BugcheckCode": "0"}, computer="PC-B"),
+    ]
+    assert "crash-while-asleep" not in _keys(analyze(events))
+
+
+def _sleep_wake_cycles(make_event, count, gap_minutes):
+    events = []
+    for i in range(count):
+        events.append(make_event(KP, 42, minutes=i * 30, level=Level.INFORMATION))
+        events.append(make_event(KP, 107, minutes=i * 30 + gap_minutes, level=Level.INFORMATION))
+    return events
+
+
+def test_repeated_quick_wakes_are_reported(make_event):
+    analysis = analyze(_sleep_wake_cycles(make_event, 5, 1))
+    finding = next(f for f in analysis.findings if f.rule.key == "wakes-immediately")
+    assert finding.count == 5
+    assert finding.severity == Severity.MEDIUM
+
+
+def test_a_few_quick_wakes_are_normal(make_event):
+    assert "wakes-immediately" not in _keys(analyze(_sleep_wake_cycles(make_event, 4, 1)))
+
+
+def test_real_sleeps_are_not_quick_wakes(make_event):
+    assert "wakes-immediately" not in _keys(analyze(_sleep_wake_cycles(make_event, 8, 20)))
+
+
+def test_one_sleep_explains_only_the_first_crash_after_it(make_event):
+    power_loss = {"BugcheckCode": "0", "PowerButtonTimestamp": "0"}
+    events = [
+        make_event(KP, 42, minutes=0, level=Level.INFORMATION),
+        make_event(KP, 41, minutes=60, data=power_loss),
+        make_event(KP, 41, minutes=180, data=power_loss),
+    ]
+    finding = next(f for f in analyze(events).findings if f.rule.key == "crash-while-asleep")
+    assert finding.count == 1
+    assert list(finding.details) == ["about 1 hour"]

@@ -1,0 +1,166 @@
+"""A timeline of boots and shutdowns, with uptime and what led up to each crash.
+
+Boots are Kernel-General 12 and EventLog 6005. Clean shutdowns are
+Kernel-General 13 and EventLog 6006. A run that ends without a shutdown event
+before the next boot is a crash, and the problems logged in the minutes before
+it are listed (SPEC.md section 13).
+"""
+
+from __future__ import annotations
+
+from collections import Counter
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+
+from eventlens.analyzer import INCIDENT_WINDOW, _group_incidents, classify_incident
+from eventlens.catalog import CRASH_EVENTS, event_key, lookup
+from eventlens.models import Event, Level
+
+BOOT_EVENTS = {("microsoft-windows-kernel-general", 12), ("eventlog", 6005)}
+SHUTDOWN_EVENTS = {("microsoft-windows-kernel-general", 13), ("eventlog", 6006)}
+# Two events this close together describe the same boot or shutdown.
+SAME_MOMENT = timedelta(minutes=2)
+# An incident can be logged a moment before the boot time we worked out.
+CLOCK_SLACK = timedelta(minutes=1)
+# How far back from a crash to look for warnings and errors.
+LEAD_UP = timedelta(minutes=5)
+MAX_LEAD_UP_ITEMS = 5
+
+
+@dataclass
+class Run:
+    """One stretch from a boot to the next shutdown or crash."""
+
+    computer: str
+    start: datetime
+    end: datetime | None  # None: still running, or the log ends first
+    ended_by: str  # "clean", "crash", or "open"
+    crash_title: str | None = None
+    crash_detail: str | None = None
+    lead_up: list[tuple[str, int]] = field(default_factory=list)
+
+    @property
+    def uptime(self) -> timedelta | None:
+        return None if self.end is None else self.end - self.start
+
+
+@dataclass
+class Timeline:
+    runs: list[Run]  # oldest first
+
+    @property
+    def crashes(self) -> list[Run]:
+        return [r for r in self.runs if r.ended_by == "crash"]
+
+    @property
+    def longest(self) -> Run | None:
+        finished = [r for r in self.runs if r.uptime is not None]
+        return max(finished, key=lambda r: r.uptime or timedelta(0), default=None)
+
+
+def _moments(events: list[Event], keys: set[tuple[str, int]]) -> list[datetime]:
+    """Times of the given events, with near-duplicates (one boot writes two) merged."""
+    times = sorted(e.time for e in events if event_key(e) in keys)
+    merged: list[datetime] = []
+    for time in times:
+        if not merged or time - merged[-1] > SAME_MOMENT:
+            merged.append(time)
+    return merged
+
+
+def format_uptime(span: timedelta) -> str:
+    minutes = int(span.total_seconds() // 60)
+    days, rest = divmod(minutes, 24 * 60)
+    hours, mins = divmod(rest, 60)
+    if days:
+        return f"{days}d {hours}h"
+    if hours:
+        return f"{hours}h {mins:02d}m"
+    return f"{mins}m"
+
+
+def _title(event: Event) -> str:
+    rule = lookup(event)
+    return rule.title if rule else f"{event.provider} {event.event_id}"
+
+
+PROBLEM_LEVELS = frozenset({Level.CRITICAL, Level.ERROR, Level.WARNING})
+
+
+def _lead_up(
+    events: list[Event], run_start: datetime, crash_time: datetime, boot_time: datetime
+) -> list[tuple[str, int]]:
+    """The commonest warnings and errors in the minutes before ``crash_time``.
+
+    Only events from this run count: a warning logged before ``run_start``
+    belongs to the run before it.
+    """
+    earliest = max(run_start, crash_time - LEAD_UP)
+    titles: Counter[str] = Counter()
+    for event in events:
+        if earliest <= event.time < boot_time and event.level in PROBLEM_LEVELS:
+            if event_key(event) not in CRASH_EVENTS:
+                titles[_title(event)] += 1
+    return titles.most_common(MAX_LEAD_UP_ITEMS)
+
+
+def _incidents_by_boot(
+    boots: list[datetime], incidents: list[list[Event]]
+) -> dict[datetime, list[Event]]:
+    """Give each crash incident to the one boot that wrote it.
+
+    A crash is logged just after the restart that follows it, so an incident
+    belongs to the latest boot at or before it. Taking the nearest boot for
+    each incident, rather than every incident near each boot, keeps quick
+    successive reboots from sharing one incident.
+    """
+    owner: dict[datetime, list[Event]] = {}
+    for incident in sorted(incidents, key=lambda i: i[0].time):
+        time = incident[0].time
+        earlier = [b for b in boots if b <= time + CLOCK_SLACK]
+        if earlier and time - earlier[-1] <= INCIDENT_WINDOW:
+            owner.setdefault(earlier[-1], incident)
+    return owner
+
+
+def _computer_runs(computer: str, events: list[Event], since: datetime | None) -> list[Run]:
+    events = sorted(events, key=lambda e: e.time)
+    all_boots = _moments(events, BOOT_EVENTS)
+    boots = [b for b in all_boots if since is None or b >= since]
+    shutdowns = _moments(events, SHUTDOWN_EVENTS)
+    crash_events = [e for e in events if event_key(e) in CRASH_EVENTS]
+    by_boot = _incidents_by_boot(all_boots, _group_incidents(crash_events))
+
+    runs = []
+    for index, start in enumerate(boots):
+        next_boot = boots[index + 1] if index + 1 < len(boots) else None
+        limit = next_boot or datetime.max.replace(tzinfo=start.tzinfo)
+        clean = [s for s in shutdowns if start < s < limit]
+        if clean:
+            runs.append(Run(computer, start, clean[-1], "clean"))
+        elif next_boot is None:
+            last = events[-1].time if events else start
+            runs.append(Run(computer, start, max(last, start), "open"))
+        else:
+            before = [e.time for e in events if start <= e.time < next_boot]
+            end = max(before, default=start)
+            run = Run(computer, start, end, "crash")
+            if next_boot in by_boot:
+                rule, detail = classify_incident(by_boot[next_boot])
+                run.crash_title, run.crash_detail = rule.title, detail
+            run.lead_up = _lead_up(events, start, end, next_boot)
+            runs.append(run)
+    return runs
+
+
+def build_timeline(events: list[Event], since: datetime | None = None) -> Timeline:
+    """Build the boot and shutdown timeline. Boots before ``since`` are left out."""
+    # Names that differ only in case are one computer, as in the main analysis.
+    by_computer: dict[str, list[Event]] = {}
+    for event in events:
+        by_computer.setdefault(event.computer.lower(), []).append(event)
+    runs: list[Run] = []
+    for computer_events in by_computer.values():
+        name = Counter(e.computer for e in computer_events).most_common(1)[0][0]
+        runs += _computer_runs(name, computer_events, since)
+    return Timeline(sorted(runs, key=lambda r: r.start))
