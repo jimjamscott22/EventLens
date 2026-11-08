@@ -1,3 +1,15 @@
+# EventLens catalog. Add one [[rule]] per event type: key, providers,
+# event_ids, severity, title, meaning, and optionally action.
+# detail = "<extractor>" names a built-in extractor (first_param, service,
+#   app_crash, app_hang, dotnet_crash, windows_update, planned_restart), or
+# detail = { field = ["Name", ...] } reads the first of those data fields;
+#   detail_label labels it in the report.
+# escalate = { count = N, severity = "..." } raises severity at N or more.
+# Rule order has no effect on matching; it only groups rules for reading.
+# [[routine_service]] (name, reason) marks a service that logs errors
+# routinely; it is reported as Info under "Normal activity".
+# A malformed entry fails with a message that names it.
+
 [[rule]]
 key = "whea-fatal"
 providers = ["Microsoft-Windows-WHEA-Logger"]

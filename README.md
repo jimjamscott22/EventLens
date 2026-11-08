@@ -56,7 +56,7 @@ EventLens recognises 31 event types, plus 12 common blue screen stop codes, and 
 | Network | Website name lookups timing out |
 | Normal activity | Planned restarts and the harmless DCOM 10016 warnings are listed separately, so they don't alarm anyone |
 
-Errors EventLens doesn't recognise yet are listed at the end by source and ID (the top 10 by default, and warnings too with `--include-warnings`). The full list of what it does recognise lives in [`catalog.py`](src/eventlens/catalog.py).
+Errors EventLens doesn't recognise yet are listed at the end by source and ID (the top 10 by default, and warnings too with `--include-warnings`). The full list of what it does recognise lives in [`catalog.toml`](src/eventlens/catalog.toml).
 
 ### Options
 
@@ -96,24 +96,54 @@ uv run eventlens --file system.evtx --format json --fail-on high > report.json
 ## How it works
 
 ```
- .evtx / .xml file            sources.py        catalog.py         analyzer.py        report.py
+ .evtx / .xml file            sources.py        catalog.toml       analyzer.py        report.py
  or live Windows log  ---->  read events  ---->  match each  ---->  group, combine ---> plain-text
  (wevtutil)                                      event to a rule     crashes, rank      report
 ```
 
 1. **Read** (`sources.py`): `.evtx` files are parsed with the [`evtx`](https://pypi.org/project/evtx/) library, which has ready-made installs for Windows, macOS, and Linux. Event Viewer `.xml` exports are parsed directly. Live logs come from Windows' built-in `wevtutil`. Damaged records are skipped and counted instead of stopping the read.
-2. **Match** (`catalog.py`): each event is looked up by its source and ID. A rule holds the plain-English title, what it means, what to do, and how to pull useful details (the app name, the service, the update) out of the event data. `.evtx` files contain no message text, so everything the report says comes from these rules.
+2. **Match** (`catalog.toml`, loaded by `catalog.py`): each event is looked up by its source and ID. A rule holds the plain-English title, what it means, what to do, and how to pull useful details (the app name, the service, the update) out of the event data. `.evtx` files contain no message text, so everything the report says comes from these rules.
 3. **Group** (`analyzer.py`): repeats become one finding with a count and first and last times. Some rules get more serious when they repeat: ten corrected memory errors are worse than one.
 4. **Combine crashes**: one crash leaves two or three events when the PC restarts. Counting each would triple-count it, so different crash events from the same computer within 10 minutes become one incident: a blue screen, a forced power-off, or a power loss. The same event twice means two separate restarts, so two crashes in quick succession are counted as two.
 5. **Rank and render** (`report.py`): findings are ordered by severity, then count, then recency, and written as plain text that fits in 75 columns, so it pastes cleanly into an email or ticket.
 
 The design, the decisions behind it, and the sample report are written up in [SPEC.md](docs/SPEC.md).
 
+## Adding an event
+
+The catalog is a data file, [`src/eventlens/catalog.toml`](src/eventlens/catalog.toml), so most new events need no Python. Add one `[[rule]]` per event type:
+
+```toml
+[[rule]]
+key = "disk-bad-block"
+providers = ["disk"]
+event_ids = [7]
+severity = "critical"          # critical, high, medium, low or info
+title = "Bad block on a drive"
+meaning = "Part of a drive can no longer be read reliably."
+action = "Back up your files now, then check the drive's health."
+escalate = { count = 10, severity = "high" }   # optional
+detail = { field = ["DriveName"] }             # optional
+detail_label = "Drive"                         # optional
+```
+
+`detail` says how to pull a useful detail out of the event data. Use either `{ field = ["Name", ...] }` (the first of these data fields that is present) or one of seven named extractors: `first_param`, `service`, `app_crash`, `app_hang`, `dotnet_crash`, `windows_update`, `planned_restart`. Anything that needs real logic is a new named extractor in `catalog.py`, the one case that still needs a code change.
+
+To mark a service that logs errors routinely, add a `[[routine_service]]`. Its errors are then reported as Info under "Normal activity":
+
+```toml
+[[routine_service]]
+name = "Interactive Services Detection"
+reason = "This Windows service logs a service error as part of normal operation."
+```
+
+Then run `uv run pytest`. A malformed entry fails with a message that names it.
+
 ## What has and hasn't been tested
 
 **Tested**
 
-- 266 automated tests, run on Windows, macOS, and Linux with Python 3.11 and 3.13 on every change. One test compares the whole report for the sample week against a saved copy.
+- 383 automated tests, run on Windows, macOS, and Linux with Python 3.11 and 3.13 on every change. One test compares the whole report for the sample week against a saved copy.
 - **Live mode on real Windows:** GitHub's Windows runners read the real System log through `wevtutil`, and write an event with accented and Japanese text and read it back intact.
 - **A real log:** I also ran it on a real 1,881-event Windows 10 System log from 2017 (a sample from the [evtx project](https://github.com/omerbenamram/evtx); not included here). Service names, drive paths, and update titles and error codes all came through correctly.
 
@@ -126,9 +156,9 @@ The design, the decisions behind it, and the sample report are written up in [SP
 
 **Known limitations**
 
-- Severity is a rule of thumb. On the real 2017 log, the Windows 10 service *Interactive Services Detection* logged a service error 10 times, which looks like routine noise rather than a fault, yet EventLens reports it as a **High** "Service stopped unexpectedly" and makes it the top issue. The catalog doesn't know which services are noisy yet.
+- Severity is a rule of thumb. Services known to log errors routinely (so far only *Interactive Services Detection*) are shown as Info under "Normal activity" instead of as a fault, but the list of noisy services is short and grows only as they are found.
 - Events outside the catalog only show their source and ID, with no explanation.
-- The catalog is small on purpose: 31 event types. It will miss problems that other events record.
+- The catalog is small on purpose: 31 event types (see [`catalog.toml`](src/eventlens/catalog.toml)). It will miss problems that other events record.
 
 ## Roadmap
 
@@ -138,7 +168,7 @@ The plan is in [SPEC.md](docs/SPEC.md#10-roadmap). In short:
 - [x] **M2:** JSON and Markdown output, colour, a report file, and exit codes that scripts can check
 - [ ] **M3:** power diagnostics. Built: battery wear, processor throttling, sleep/wake analysis, and SleepStudy drain/offender reports. Remaining: battery capacity history, broader report compatibility, and validation with real laptop battery data.
 - [x] **M4:** a timeline of boots and shutdowns (`--timeline`), uptime, and what happened before each crash
-- [ ] **M5:** a bigger catalog kept in a data file, with noisy services handled
+- [x] **M5 (partly):** the catalog is now a data file (`catalog.toml`) and noisy services are handled. More events and an optional Security log remain open.
 - [ ] **M6:** publish to PyPI, and a standalone Windows `.exe`
 
 ## Development

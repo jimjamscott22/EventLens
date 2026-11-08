@@ -316,7 +316,7 @@ M1 and M2 added no runtime dependencies: `argparse` and the standard library are
 | **M2 Output options** | `--format json` and `markdown`, colour in terminals, `--output FILE`, `--fail-on SEVERITY` exit codes (§3, §7) | Done |
 | **M3 Power diagnostics** | Built: battery wear, processor throttling, sleep/wake analysis, and SleepStudy drain/offender reports (§12). Remaining: capacity history, broader report compatibility, and real laptop battery validation | In progress |
 | **M4 Timeline** | Boot and shutdown sessions (Kernel-General 12/13, EventLog 6005/6006), uptime, and "what happened in the minutes before each crash" | Done (§13) |
-| **M5 Catalog growth** | Move the catalog to a data file (TOML) so new events can be added without code; more events; handle services that log errors routinely (see the README's known limitations); optional Security log | Planned |
+| **M5 Catalog growth** | Done: the catalog moved to a data file (`catalog.toml`) so new events can be added without code, and services that log errors routinely are handled. Still planned: more events; optional Security log | In progress |
 | **M6 Distribution** | Publish to PyPI (`uvx eventlens`), plus a standalone Windows `.exe` for people without Python | Planned |
 
 ## 11. Decisions
