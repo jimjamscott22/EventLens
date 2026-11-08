@@ -12,6 +12,7 @@ All text is ASCII so the report prints on any Windows console.
 from __future__ import annotations
 
 import re
+import tomllib
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
@@ -617,6 +618,190 @@ def _build_index(rules: tuple[Rule, ...]) -> dict[tuple[str, int], Rule]:
                     raise ValueError(f"Duplicate catalog entry for {key}")
                 index[key] = rule
     return index
+
+
+# --- Loading a catalog from TOML ---
+
+
+class CatalogError(ValueError):
+    """The catalog text is invalid. Messages start with the offending entry."""
+
+
+@dataclass(frozen=True)
+class RoutineService:
+    """A service whose stop or crash events are routine (parsed in a later task)."""
+
+    name: str
+    reason: str
+    rules: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Catalog:
+    rules: tuple[Rule, ...]
+    stop_codes: dict[int, tuple[str, str]]
+    routine_services: tuple[RoutineService, ...]
+
+
+EXTRACTORS: dict[str, DetailFn] = {
+    "first_param": _first_param,
+    "service": _service,
+    "app_crash": _app_crash,
+    "app_hang": _app_hang,
+    "dotnet_crash": _dotnet_crash,
+    "windows_update": _windows_update,
+    "planned_restart": _planned_restart,
+}
+
+_REQUIRED_RULE_FIELDS = ("key", "providers", "event_ids", "severity", "title", "meaning")
+_OPTIONAL_RULE_FIELDS = ("action", "escalate", "detail", "detail_label")
+_STOP_CODE_KEY = re.compile(r"0[xX][0-9A-Fa-f]+")
+
+
+def _check_ascii(label: str, value: str, what: str) -> None:
+    if not value.isascii():
+        raise CatalogError(f"{label}: {what} must be ASCII")
+
+
+def _severity(label: str, value: object, what: str = "severity") -> Severity:
+    if not isinstance(value, str) or value.upper() not in Severity.__members__:
+        names = ", ".join(n.lower() for n in Severity.__members__)
+        raise CatalogError(f"{label}: {what} must be one of {names}, got {value!r}")
+    return Severity[value.upper()]
+
+
+def _text(label: str, table: dict, name: str, default: str | None = None) -> str:
+    value = table.get(name, default)
+    if not isinstance(value, str):
+        raise CatalogError(f"{label}: {name} must be a string")
+    _check_ascii(label, value, name)
+    return value
+
+
+def _detail(label: str, value: object) -> DetailFn | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if value not in EXTRACTORS:
+            known = ", ".join(sorted(EXTRACTORS))
+            raise CatalogError(f"{label}: unknown detail extractor {value!r} (known: {known})")
+        return EXTRACTORS[value]
+    if isinstance(value, dict) and set(value) == {"field"}:
+        names = value["field"]
+        if (
+            not isinstance(names, list)
+            or not names
+            or not all(isinstance(n, str) and n for n in names)
+        ):
+            raise CatalogError(f"{label}: detail field must be a non-empty list of names")
+        for name in names:
+            _check_ascii(label, name, "detail field name")
+        field_names = tuple(names)
+        return lambda event: field(event, *field_names)
+    raise CatalogError(f"{label}: detail must be an extractor name or {{ field = [names] }}")
+
+
+def _parse_rule(index: int, table: object) -> Rule:
+    if not isinstance(table, dict):
+        raise CatalogError(f"rule #{index + 1}: must be a table")
+    raw_key = table.get("key")
+    label = f"rule {raw_key!r}" if isinstance(raw_key, str) else f"rule #{index + 1}"
+    for name in _REQUIRED_RULE_FIELDS:
+        if name not in table:
+            raise CatalogError(f"{label}: missing required field {name}")
+    unknown = sorted(set(table) - set(_REQUIRED_RULE_FIELDS) - set(_OPTIONAL_RULE_FIELDS))
+    if unknown:
+        raise CatalogError(f"{label}: unknown field {', '.join(unknown)}")
+
+    key = _text(label, table, "key")
+    providers = table["providers"]
+    if not isinstance(providers, list) or not all(isinstance(p, str) for p in providers):
+        raise CatalogError(f"{label}: providers must be a list of strings")
+    for provider in providers:
+        _check_ascii(label, provider, "providers")
+    event_ids = table["event_ids"]
+    if not isinstance(event_ids, list) or not all(
+        isinstance(i, int) and not isinstance(i, bool) for i in event_ids
+    ):
+        raise CatalogError(f"{label}: event_ids must be a list of integers")
+    severity = _severity(label, table["severity"])
+
+    escalate = None
+    if "escalate" in table:
+        spec = table["escalate"]
+        if not isinstance(spec, dict) or set(spec) != {"count", "severity"}:
+            raise CatalogError(f"{label}: escalate must be {{ count, severity }}")
+        count = spec["count"]
+        if not isinstance(count, int) or isinstance(count, bool) or count < 2:
+            raise CatalogError(f"{label}: escalate count must be an integer of at least 2")
+        target = _severity(label, spec["severity"], "escalate severity")
+        if target <= severity:
+            raise CatalogError(f"{label}: escalate severity must be above the rule's severity")
+        escalate = (count, target)
+
+    return Rule(
+        key=key,
+        providers=tuple(providers),
+        event_ids=tuple(event_ids),
+        severity=severity,
+        title=_text(label, table, "title"),
+        meaning=_text(label, table, "meaning"),
+        action=_text(label, table, "action", ""),
+        escalate=escalate,
+        detail=_detail(label, table.get("detail")),
+        detail_label=_text(label, table, "detail_label", "Details"),
+    )
+
+
+def _parse_stop_codes(table: object) -> dict[int, tuple[str, str]]:
+    if not isinstance(table, dict):
+        raise CatalogError("stop_codes: must be a table")
+    codes: dict[int, tuple[str, str]] = {}
+    for raw, entry in table.items():
+        label = f"stop code {raw!r}"
+        if not _STOP_CODE_KEY.fullmatch(raw):
+            raise CatalogError(f"{label}: key must be hex like 0x0A")
+        code = int(raw, 16)
+        if code in codes:
+            raise CatalogError(f"{label}: Duplicate stop code 0x{code:X}")
+        if not isinstance(entry, dict) or set(entry) != {"name", "hint"}:
+            raise CatalogError(f"{label}: must be {{ name, hint }}")
+        codes[code] = (_text(label, entry, "name"), _text(label, entry, "hint"))
+    return codes
+
+
+def parse_catalog(text: str) -> Catalog:
+    """Parse and validate catalog TOML. Raises ``CatalogError`` naming the bad entry."""
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        raise CatalogError(f"catalog: invalid TOML: {exc}") from exc
+    unknown = sorted(set(data) - {"rule", "stop_codes", "routine_service"})
+    if unknown:
+        raise CatalogError(f"catalog: unknown top-level key {', '.join(unknown)}")
+    raw_rules = data.get("rule", [])
+    if not isinstance(raw_rules, list):
+        raise CatalogError("catalog: rule must be an array of tables")
+
+    rules: list[Rule] = []
+    seen_keys: set[str] = set()
+    for i, raw in enumerate(raw_rules):
+        rule = _parse_rule(i, raw)
+        label = f"rule {rule.key!r}"
+        if rule.key in seen_keys:
+            raise CatalogError(f"{label}: Duplicate key")
+        seen_keys.add(rule.key)
+        rules.append(rule)
+        try:
+            _build_index(tuple(rules))
+        except ValueError as exc:
+            raise CatalogError(f"{label}: {exc}") from exc
+
+    return Catalog(
+        rules=tuple(rules),
+        stop_codes=_parse_stop_codes(data.get("stop_codes", {})),
+        routine_services=(),
+    )
 
 
 _INDEX = _build_index(RULES)
