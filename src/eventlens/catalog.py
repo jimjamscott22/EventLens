@@ -4,7 +4,8 @@ Each ``Rule`` maps one or more (provider, event ID) pairs to a plain-English
 title, meaning, and next step. Crash events (Kernel-Power 41, EventLog 6008,
 and BugCheck 1001) are not rules: the analyzer combines them into incidents,
 described by the ``BLUE_SCREEN``, ``FORCED_POWER_OFF``, and ``POWER_LOSS``
-rules at the bottom of this module.
+rules in this module. The ordinary rules and the blue screen stop codes live in
+``catalog.toml``, which this module loads at import time.
 
 All text is ASCII so the report prints on any Windows console.
 """
@@ -16,6 +17,7 @@ import tomllib
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
+from importlib.resources import files
 from pathlib import PureWindowsPath
 
 from eventlens.models import Event
@@ -126,33 +128,6 @@ def _first_param(event: Event) -> str | None:
     return field(event, "param1")
 
 
-# --- Blue screen stop codes ---
-
-STOP_CODES: dict[int, tuple[str, str]] = {
-    0x0A: ("IRQL_NOT_LESS_OR_EQUAL", "usually a faulty driver"),
-    0x1A: ("MEMORY_MANAGEMENT", "often faulty RAM; run Windows Memory Diagnostic"),
-    0x3B: ("SYSTEM_SERVICE_EXCEPTION", "a driver or system file problem"),
-    0x50: ("PAGE_FAULT_IN_NONPAGED_AREA", "a faulty driver, RAM, or antivirus"),
-    0x7E: ("SYSTEM_THREAD_EXCEPTION_NOT_HANDLED", "a driver crashed"),
-    0x9F: ("DRIVER_POWER_STATE_FAILURE", "a driver failed during sleep or wake"),
-    0xD1: (
-        "DRIVER_IRQL_NOT_LESS_OR_EQUAL",
-        "a network, storage, or graphics driver crashed",
-    ),
-    0xEF: (
-        "CRITICAL_PROCESS_DIED",
-        "a core Windows process stopped; check the disk and system files",
-    ),
-    0x116: ("VIDEO_TDR_FAILURE", "a graphics driver or GPU problem"),
-    0x124: (
-        "WHEA_UNCORRECTABLE_ERROR",
-        "a hardware fault: CPU, RAM, overheating, or overclocking",
-    ),
-    0x133: ("DPC_WATCHDOG_VIOLATION", "a driver or SSD firmware hung"),
-    0x139: ("KERNEL_SECURITY_CHECK_FAILURE", "a driver, RAM, or corrupt system files"),
-}
-
-
 def parse_stop_code(value: str | None) -> int | None:
     """Normalise a stop code from either crash event into an int.
 
@@ -185,327 +160,6 @@ def describe_stop_code(code: int) -> str:
 _UPDATE_DRIVERS = (
     "Update the drivers (graphics, Wi-Fi, chipset, storage) from the PC or "
     "motherboard maker's website and install all Windows updates."
-)
-
-RULES: tuple[Rule, ...] = (
-    Rule(
-        key="whea-fatal",
-        providers=("Microsoft-Windows-WHEA-Logger",),
-        event_ids=(18,),
-        severity=Severity.CRITICAL,
-        title="Fatal processor hardware error",
-        meaning=(
-            "The processor reported an error it could not recover from. This "
-            "points to failing hardware, overheating, or unstable overclocking."
-        ),
-        action=(
-            "Undo any overclocking, check that fans and vents are clean, and "
-            "update the BIOS/UEFI. If it keeps happening, the CPU, RAM, or "
-            "motherboard may need replacing."
-        ),
-    ),
-    Rule(
-        key="whea-corrected",
-        providers=("Microsoft-Windows-WHEA-Logger",),
-        event_ids=(17, 19),
-        severity=Severity.LOW,
-        escalate=(10, Severity.HIGH),
-        title="Corrected hardware error",
-        meaning=(
-            "A hardware component (usually a PCIe device or the processor) had "
-            "an error that was fixed automatically. A few are normal; many in a "
-            "short time suggest a device is starting to fail."
-        ),
-        action=(
-            "If this appears often, update the BIOS/UEFI and chipset drivers, "
-            "and reseat or test recently added hardware."
-        ),
-    ),
-    Rule(
-        key="whea-memory",
-        providers=("Microsoft-Windows-WHEA-Logger",),
-        event_ids=(47,),
-        severity=Severity.LOW,
-        escalate=(10, Severity.HIGH),
-        title="Corrected memory error",
-        meaning=(
-            "The RAM returned bad data that was corrected automatically. "
-            "Repeated errors are an early sign of failing memory."
-        ),
-        action=(
-            "Run Windows Memory Diagnostic. If errors continue, reseat or "
-            "replace the RAM sticks."
-        ),
-    ),
-    Rule(
-        key="disk-bad-block",
-        providers=("disk",),
-        event_ids=(7,),
-        severity=Severity.CRITICAL,
-        title="Bad block on a drive",
-        meaning="Part of a drive can no longer be read reliably. Data on it is at risk.",
-        action=(
-            "Back up your files now. Then check the drive's health (for example "
-            "with CrystalDiskInfo or the maker's tool) and plan to replace it."
-        ),
-        detail=_first_param,
-        detail_label="Drive",
-    ),
-    Rule(
-        key="disk-paging-error",
-        providers=("disk",),
-        event_ids=(51,),
-        severity=Severity.HIGH,
-        title="Drive error during paging",
-        meaning=(
-            "Windows hit an error while moving memory to or from a drive. This "
-            "can mean a failing drive or a loose cable."
-        ),
-        action=(
-            "Back up your files, check the drive's health, and reseat its cable "
-            "if it's a desktop PC."
-        ),
-        detail=_first_param,
-        detail_label="Drive",
-    ),
-    Rule(
-        key="disk-retried",
-        providers=("disk",),
-        event_ids=(153,),
-        severity=Severity.MEDIUM,
-        escalate=(10, Severity.HIGH),
-        title="Drive operation had to be retried",
-        meaning=(
-            "A read or write to a drive took too long and had to be tried "
-            "again. Occasional retries happen; many suggest a drive problem."
-        ),
-        action=(
-            "Update the storage driver and drive firmware, and check the "
-            "drive's health. Back up if retries are frequent."
-        ),
-    ),
-    Rule(
-        key="ntfs-corruption",
-        providers=("Ntfs", "Microsoft-Windows-Ntfs"),
-        event_ids=(55,),
-        severity=Severity.CRITICAL,
-        title="File system corruption detected",
-        meaning="The structure of the file system on a drive is damaged.",
-        action=(
-            "Back up your files, then run 'chkdsk /f' on the affected drive "
-            "from an administrator command prompt and restart."
-        ),
-        detail=lambda e: field(e, "DriveName"),
-        detail_label="Drive",
-    ),
-    Rule(
-        key="display-reset",
-        providers=("Display",),
-        event_ids=(4101,),
-        severity=Severity.HIGH,
-        title="Display driver stopped responding and recovered",
-        meaning=(
-            "The graphics driver froze and Windows restarted it. You may have "
-            "seen the screen go black or flicker."
-        ),
-        action=(
-            "Install the latest graphics driver from NVIDIA, AMD, or Intel. If "
-            "it happens in games, check GPU temperatures and undo overclocking."
-        ),
-        detail=_first_param,
-        detail_label="Driver",
-    ),
-    Rule(
-        key="app-crash",
-        providers=("Application Error",),
-        event_ids=(1000,),
-        severity=Severity.MEDIUM,
-        escalate=(5, Severity.HIGH),
-        title="App crashed",
-        meaning="These programs closed unexpectedly.",
-        action=(
-            "Update or reinstall the app. Crashes in a graphics module such as "
-            "d3d11.dll or a GPU driver file often go away after a graphics "
-            "driver update."
-        ),
-        detail=_app_crash,
-    ),
-    Rule(
-        key="app-hang",
-        providers=("Application Hang",),
-        event_ids=(1002,),
-        severity=Severity.MEDIUM,
-        escalate=(5, Severity.HIGH),
-        title="App stopped responding",
-        meaning="These programs froze and were closed.",
-        action=(
-            "Update the app. If many different apps hang, check for a full "
-            "disk, low memory, or a failing drive."
-        ),
-        detail=_app_hang,
-    ),
-    Rule(
-        key="dotnet-crash",
-        providers=(".NET Runtime",),
-        event_ids=(1026,),
-        severity=Severity.MEDIUM,
-        escalate=(5, Severity.HIGH),
-        title=".NET app crashed with an unhandled error",
-        meaning="A program built on .NET hit an error it didn't handle and closed.",
-        action="Update or reinstall the app, and install .NET updates through Windows Update.",
-        detail=_dotnet_crash,
-    ),
-    Rule(
-        key="service-start-failed",
-        providers=("Service Control Manager",),
-        event_ids=(7000, 7009),
-        severity=Severity.MEDIUM,
-        title="Service failed to start",
-        meaning="A background service didn't start, or took too long to start.",
-        action=(
-            "If the service belongs to software you use, reinstall or update "
-            "it. If it belongs to software you've removed, it's safe to ignore."
-        ),
-        detail=_service,
-        detail_label="Services",
-    ),
-    Rule(
-        key="service-crashed",
-        providers=("Service Control Manager",),
-        event_ids=(7023, 7031, 7034),
-        severity=Severity.HIGH,
-        title="Service stopped unexpectedly",
-        meaning="A background service crashed or stopped with an error.",
-        action=(
-            "Update or reinstall the software the service belongs to. For "
-            "Windows services, install updates and run 'sfc /scannow' from an "
-            "administrator command prompt."
-        ),
-        detail=_service,
-        detail_label="Services",
-    ),
-    Rule(
-        key="update-failed",
-        providers=("Microsoft-Windows-WindowsUpdateClient",),
-        event_ids=(20,),
-        severity=Severity.MEDIUM,
-        title="Windows Update failed to install",
-        meaning="An update downloaded but could not be installed.",
-        action=(
-            "Restart and run Windows Update again. If it keeps failing, run the "
-            "Windows Update troubleshooter or search for the error code."
-        ),
-        detail=_windows_update,
-        detail_label="Updates",
-    ),
-    Rule(
-        key="low-memory",
-        providers=("Microsoft-Windows-Resource-Exhaustion-Detector",),
-        event_ids=(2004,),
-        severity=Severity.HIGH,
-        title="PC ran low on memory",
-        meaning=(
-            "Windows nearly ran out of memory, which makes apps slow, freeze, "
-            "or crash."
-        ),
-        action=(
-            "Close programs you aren't using, check Task Manager for one using "
-            "far more memory than expected, and make sure the page file is "
-            "enabled. Adding RAM helps if this happens often."
-        ),
-    ),
-    Rule(
-        key="driver-load-failed",
-        providers=("Microsoft-Windows-Kernel-PnP",),
-        event_ids=(219,),
-        severity=Severity.MEDIUM,
-        title="A driver failed to load",
-        meaning="A device driver didn't load at startup, so the device may not work.",
-        action=(
-            "Check Device Manager for devices with a warning icon and update "
-            "their drivers. If everything works, this is usually harmless."
-        ),
-        detail=lambda e: field(e, "DriverName"),
-        detail_label="Devices",
-    ),
-    Rule(
-        key="disk-full",
-        providers=("srv",),
-        event_ids=(2013,),
-        severity=Severity.MEDIUM,
-        title="A disk is nearly full",
-        meaning="A drive is at or near capacity, which can cause errors and slowdowns.",
-        action="Free up space with Disk Cleanup or Storage Sense, or move files elsewhere.",
-    ),
-    Rule(
-        key="dns-timeout",
-        providers=("Microsoft-Windows-DNS-Client",),
-        event_ids=(1014,),
-        severity=Severity.LOW,
-        title="Website name lookups timed out",
-        meaning=(
-            "The PC couldn't look up some website names in time. Brief network "
-            "drops cause this and it's usually harmless."
-        ),
-        action=(
-            "If websites often fail to load, restart your router, or try a "
-            "different DNS server."
-        ),
-        detail=lambda e: field(e, "QueryName"),
-        detail_label="Names",
-    ),
-    Rule(
-        key="cpu-throttled",
-        providers=("Microsoft-Windows-Kernel-Processor-Power",),
-        event_ids=(37,),
-        severity=Severity.MEDIUM,
-        title="Processor speed was limited by the firmware",
-        meaning=(
-            "The firmware slowed the processor down, usually because of heat "
-            "or a power limit. The PC feels slow while this happens."
-        ),
-        action=(
-            "Clean the vents and fans, make sure the PC is on a hard surface, "
-            "and use the original charger on a laptop. Update the BIOS if the "
-            "problem continues."
-        ),
-    ),
-    Rule(
-        key="sleep",
-        providers=("Microsoft-Windows-Kernel-Power",),
-        event_ids=(42, 506),
-        severity=Severity.INFO,
-        title="PC went to sleep",
-        meaning="Windows put the PC to sleep (or into connected standby).",
-    ),
-    Rule(
-        key="wake",
-        providers=("Microsoft-Windows-Kernel-Power", "Microsoft-Windows-Power-Troubleshooter"),
-        event_ids=(107, 507, 1),
-        severity=Severity.INFO,
-        title="PC woke from sleep",
-        meaning="The PC resumed from sleep.",
-    ),
-    Rule(
-        key="planned-restart",
-        providers=("User32",),
-        event_ids=(1074,),
-        severity=Severity.INFO,
-        title="Planned restart or shutdown",
-        meaning="A program or person asked Windows to restart or shut down.",
-        detail=_planned_restart,
-    ),
-    Rule(
-        key="dcom-10016",
-        providers=("Microsoft-Windows-DistributedCOM",),
-        event_ids=(10016,),
-        severity=Severity.INFO,
-        title="DCOM permission warnings (harmless, safe to ignore)",
-        meaning=(
-            "Windows components log these routinely. Microsoft says they don't "
-            "affect how the PC works."
-        ),
-    ),
 )
 
 # --- Crash incidents (see SPEC.md section 5) ---
@@ -804,6 +458,9 @@ def parse_catalog(text: str) -> Catalog:
     )
 
 
+_CATALOG = parse_catalog(files("eventlens").joinpath("catalog.toml").read_text(encoding="utf-8"))
+RULES: tuple[Rule, ...] = _CATALOG.rules
+STOP_CODES: dict[int, tuple[str, str]] = _CATALOG.stop_codes
 _INDEX = _build_index(RULES)
 
 

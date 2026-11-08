@@ -109,3 +109,33 @@ def test_invalid_catalogs_name_the_entry(text: str, pattern: str) -> None:
 
 def test_catalog_error_is_a_value_error() -> None:
     assert issubclass(CatalogError, ValueError)
+
+
+def test_bundled_catalog_has_23_rules_and_12_stop_codes() -> None:
+    from eventlens import catalog
+
+    assert len(catalog.RULES) == 23
+    assert len(catalog.STOP_CODES) == 12
+
+
+def _bundled_text() -> str:
+    from importlib.resources import files
+
+    return files("eventlens").joinpath("catalog.toml").read_text(encoding="utf-8")
+
+
+def test_bundled_text_is_ascii() -> None:
+    assert _bundled_text().isascii()
+
+
+def test_crlf_checkout_loads_identically() -> None:
+    text = _bundled_text()
+    from dataclasses import replace
+
+    def comparable(rules):
+        # `{ field = [...] }` details build a fresh lambda per parse, so compare behaviour
+        # separately from the data fields.
+        return [(replace(r, detail=None), r.detail is None) for r in rules]
+
+    crlf = parse_catalog(text.replace("\n", "\r\n")).rules
+    assert comparable(crlf) == comparable(parse_catalog(text).rules)
