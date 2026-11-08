@@ -6,7 +6,16 @@ from datetime import datetime, timezone
 
 import pytest
 
-from eventlens.catalog import CatalogError, Severity, parse_catalog
+from eventlens.catalog import (
+    DERIVED_RULES,
+    ROUTINE_SERVICE_ERRORS,
+    ROUTINE_SERVICES,
+    RULES,
+    CatalogError,
+    Severity,
+    parse_catalog,
+    routine_service_for,
+)
 from eventlens.models import Event, Level
 
 
@@ -139,3 +148,72 @@ def test_crlf_checkout_loads_identically() -> None:
 
     crlf = parse_catalog(text.replace("\n", "\r\n")).rules
     assert comparable(crlf) == comparable(parse_catalog(text).rules)
+
+
+# --- Routine services ---
+
+ROUTINE_NAME = "Interactive Services Detection"
+
+
+def _service_toml(rules: str | None = None, reason: str | None = '"R"', name: str = "X") -> str:
+    lines = ["[[routine_service]]", f'name = "{name}"']
+    if reason is not None:
+        lines.append(f"reason = {reason}")
+    if rules is not None:
+        lines.append(f"rules = {rules}")
+    return "\n".join(lines) + "\n"
+
+
+def _rule(key: str):
+    return next(r for r in RULES if r.key == key)
+
+
+def test_seed_routine_service() -> None:
+    (entry,) = ROUTINE_SERVICES
+    assert entry.name == ROUTINE_NAME
+    assert entry.reason == "This Windows service logs a service error as part of normal operation."
+    assert entry.rules == ("service-start-failed", "service-crashed")
+
+
+def test_routine_service_rules_default_to_the_two_service_rules() -> None:
+    (entry,) = parse_catalog(_service_toml()).routine_services
+    assert entry.rules == ("service-start-failed", "service-crashed")
+
+
+def test_routine_service_for_matches_ignoring_case_and_padding() -> None:
+    found = routine_service_for(_rule("service-crashed"), "  interactive SERVICES detection ")
+    assert found is ROUTINE_SERVICES[0]
+
+
+def test_routine_service_for_misses() -> None:
+    assert routine_service_for(_rule("service-crashed"), "Print Spooler") is None
+    assert routine_service_for(_rule("service-crashed"), None) is None
+    assert routine_service_for(_rule("app-crash"), ROUTINE_NAME) is None
+
+
+def test_entry_limited_to_one_rule() -> None:
+    text = RULE("service-crashed") + RULE("service-start-failed", event_ids="[2]")
+    text += _service_toml(rules='["service-crashed"]')
+    parsed = parse_catalog(text)
+    start_failed = parsed.rules[1]
+    assert routine_service_for(start_failed, "X", parsed.routine_services) is None
+    assert routine_service_for(parsed.rules[0], "X", parsed.routine_services) is not None
+
+
+@pytest.mark.parametrize(
+    ("toml", "pattern"),
+    [
+        (_service_toml(rules='["nope"]'), r"routine_service 'X'.*unknown rule"),
+        (_service_toml(reason=None), r"routine_service 'X'.*reason"),
+        (_service_toml(reason='"café"'), r"routine_service 'X'.*ASCII"),
+        ('routine_service = "x"\n', r"routine_service.*array of tables"),
+    ],
+)
+def test_routine_service_validation(toml: str, pattern: str) -> None:
+    with pytest.raises(CatalogError, match=pattern):
+        parse_catalog(toml)
+
+
+def test_derived_rule_is_registered() -> None:
+    assert ROUTINE_SERVICE_ERRORS in DERIVED_RULES
+    assert ROUTINE_SERVICE_ERRORS.severity is Severity.INFO

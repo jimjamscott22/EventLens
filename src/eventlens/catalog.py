@@ -259,7 +259,19 @@ WAKES_IMMEDIATELY = Rule(
     ),
 )
 
-DERIVED_RULES = (CRASH_WHILE_ASLEEP, WAKES_IMMEDIATELY)
+ROUTINE_SERVICE_ERRORS = Rule(
+    key="routine-service-errors",
+    providers=(),
+    event_ids=(),
+    severity=Severity.INFO,
+    title="Services that log errors routinely",
+    meaning=(
+        "These services log errors as part of normal operation. They are listed "
+        "here so they don't hide real service problems."
+    ),
+)
+
+DERIVED_RULES = (CRASH_WHILE_ASLEEP, WAKES_IMMEDIATELY, ROUTINE_SERVICE_ERRORS)
 
 
 def _build_index(rules: tuple[Rule, ...]) -> dict[tuple[str, int], Rule]:
@@ -283,7 +295,7 @@ class CatalogError(ValueError):
 
 @dataclass(frozen=True)
 class RoutineService:
-    """A service whose stop or crash events are routine (parsed in a later task)."""
+    """A service whose stop or crash events are routine."""
 
     name: str
     reason: str
@@ -424,6 +436,42 @@ def _parse_stop_codes(table: object) -> dict[int, tuple[str, str]]:
     return codes
 
 
+_DEFAULT_SERVICE_RULES = ("service-start-failed", "service-crashed")
+
+
+def _parse_routine_services(raw: object, rule_keys: set[str]) -> tuple[RoutineService, ...]:
+    if not isinstance(raw, list) or not all(isinstance(t, dict) for t in raw):
+        raise CatalogError("catalog: routine_service must be an array of tables")
+    services: list[RoutineService] = []
+    for i, table in enumerate(raw):
+        name = table.get("name")
+        if not isinstance(name, str) or not name:
+            raise CatalogError(f"routine_service #{i + 1}: name must be a non-empty string")
+        label = f"routine_service {name!r}"
+        _check_ascii(label, name, "name")
+        unknown = sorted(set(table) - {"name", "reason", "rules"})
+        if unknown:
+            raise CatalogError(f"{label}: unknown field {', '.join(unknown)}")
+        if "reason" not in table:
+            raise CatalogError(f"{label}: missing required field reason")
+        reason = _text(label, table, "reason")
+        rules = _DEFAULT_SERVICE_RULES
+        if "rules" in table:
+            listed = table["rules"]
+            if (
+                not isinstance(listed, list)
+                or not listed
+                or not all(isinstance(k, str) for k in listed)
+            ):
+                raise CatalogError(f"{label}: rules must be a non-empty list of rule keys")
+            for key in listed:
+                if key not in rule_keys:
+                    raise CatalogError(f"{label}: unknown rule {key!r}")
+            rules = tuple(listed)
+        services.append(RoutineService(name=name, reason=reason, rules=rules))
+    return tuple(services)
+
+
 def parse_catalog(text: str) -> Catalog:
     """Parse and validate catalog TOML. Raises ``CatalogError`` naming the bad entry."""
     try:
@@ -454,14 +502,30 @@ def parse_catalog(text: str) -> Catalog:
     return Catalog(
         rules=tuple(rules),
         stop_codes=_parse_stop_codes(data.get("stop_codes", {})),
-        routine_services=(),
+        routine_services=_parse_routine_services(data.get("routine_service", []), seen_keys),
     )
 
 
 _CATALOG = parse_catalog(files("eventlens").joinpath("catalog.toml").read_text(encoding="utf-8"))
 RULES: tuple[Rule, ...] = _CATALOG.rules
 STOP_CODES: dict[int, tuple[str, str]] = _CATALOG.stop_codes
+ROUTINE_SERVICES: tuple[RoutineService, ...] = _CATALOG.routine_services
 _INDEX = _build_index(RULES)
+
+
+def routine_service_for(
+    rule: Rule,
+    detail: str | None,
+    services: tuple[RoutineService, ...] = ROUTINE_SERVICES,
+) -> RoutineService | None:
+    """Return the routine-service entry for a service event, or None."""
+    if detail is None:
+        return None
+    wanted = detail.strip().casefold()
+    for service in services:
+        if rule.key in service.rules and service.name.casefold() == wanted:
+            return service
+    return None
 
 
 def event_key(event: Event) -> tuple[str, int]:

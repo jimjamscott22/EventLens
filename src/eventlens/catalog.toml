@@ -229,6 +229,10 @@ severity = "info"
 title = "DCOM permission warnings (harmless, safe to ignore)"
 meaning = "Windows components log these routinely. Microsoft says they don't affect how the PC works."
 
+[[routine_service]]
+name = "Interactive Services Detection"
+reason = "This Windows service logs a service error as part of normal operation."
+
 [stop_codes]
 0x0A = { name = "IRQL_NOT_LESS_OR_EQUAL", hint = "usually a faulty driver" }
 0x1A = { name = "MEMORY_MANAGEMENT", hint = "often faulty RAM; run Windows Memory Diagnostic" }
