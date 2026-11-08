@@ -115,16 +115,16 @@ The catalog is a data file, [`src/eventlens/catalog.toml`](src/eventlens/catalog
 
 ```toml
 [[rule]]
-key = "disk-bad-block"
-providers = ["disk"]
-event_ids = [7]
-severity = "critical"          # critical, high, medium, low or info
-title = "Bad block on a drive"
-meaning = "Part of a drive can no longer be read reliably."
-action = "Back up your files now, then check the drive's health."
-escalate = { count = 10, severity = "high" }   # optional
-detail = { field = ["DriveName"] }             # optional
-detail_label = "Drive"                         # optional
+key = "example-device-fault"
+providers = ["Example-Provider"]
+event_ids = [1234]
+severity = "medium"            # critical, high, medium, low or info
+title = "Example device fault"
+meaning = "The example device reported a fault it could not clear."
+action = "Restart the device and update its driver."
+escalate = { count = 10, severity = "high" }   # optional; must be above severity
+detail = { field = ["DeviceName"] }            # optional
+detail_label = "Device"                        # optional
 ```
 
 `detail` says how to pull a useful detail out of the event data. Use either `{ field = ["Name", ...] }` (the first of these data fields that is present) or one of seven named extractors: `first_param`, `service`, `app_crash`, `app_hang`, `dotnet_crash`, `windows_update`, `planned_restart`. Anything that needs real logic is a new named extractor in `catalog.py`, the one case that still needs a code change.
@@ -133,8 +133,8 @@ To mark a service that logs errors routinely, add a `[[routine_service]]`. Its e
 
 ```toml
 [[routine_service]]
-name = "Interactive Services Detection"
-reason = "This Windows service logs a service error as part of normal operation."
+name = "Example Noisy Service"
+reason = "This service logs a service error as part of normal operation."
 ```
 
 Then run `uv run pytest`. A malformed entry fails with a message that names it.
