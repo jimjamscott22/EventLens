@@ -54,7 +54,7 @@ EventLens recognises 31 event types, plus 12 common blue screen stop codes, and 
 | Apps and services | App crashes and hangs, .NET crashes, services that crash or fail to start |
 | System health | Display driver resets, low memory, drives nearly full, drivers that failed to load, failed Windows updates |
 | Network | Website name lookups timing out |
-| Normal activity | Planned restarts and the harmless DCOM 10016 warnings are listed separately, so they don't alarm anyone |
+| Normal activity | Planned restarts, the harmless DCOM 10016 warnings, and services that routinely log errors (such as Interactive Services Detection) are listed separately, so they don't alarm anyone |
 
 Errors EventLens doesn't recognise yet are listed at the end by source and ID (the top 10 by default, and warnings too with `--include-warnings`). The full list of what it does recognise lives in [`catalog.toml`](src/eventlens/catalog.toml).
 

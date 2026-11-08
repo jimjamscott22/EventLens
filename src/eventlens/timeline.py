@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from eventlens.analyzer import INCIDENT_WINDOW, _group_incidents, classify_incident
-from eventlens.catalog import CRASH_EVENTS, event_key, lookup
+from eventlens.catalog import CRASH_EVENTS, event_key, lookup, routine_service_for
 from eventlens.models import Event, Level
 
 BOOT_EVENTS = {("microsoft-windows-kernel-general", 12), ("eventlog", 6005)}
@@ -99,8 +99,15 @@ def _lead_up(
     titles: Counter[str] = Counter()
     for event in events:
         if earliest <= event.time < boot_time and event.level in PROBLEM_LEVELS:
-            if event_key(event) not in CRASH_EVENTS:
-                titles[_title(event)] += 1
+            if event_key(event) in CRASH_EVENTS:
+                continue
+            rule = lookup(event)
+            # Services that log errors routinely are noise here, as in the report.
+            if rule is not None and routine_service_for(
+                rule, rule.detail(event) if rule.detail else None
+            ):
+                continue
+            titles[_title(event)] += 1
     return titles.most_common(MAX_LEAD_UP_ITEMS)
 
 

@@ -445,6 +445,8 @@ def _parse_routine_services(raw: object, rule_keys: set[str]) -> tuple[RoutineSe
     services: list[RoutineService] = []
     for i, table in enumerate(raw):
         name = table.get("name")
+        if isinstance(name, str):
+            name = name.strip()
         if not isinstance(name, str) or not name:
             raise CatalogError(f"routine_service #{i + 1}: name must be a non-empty string")
         label = f"routine_service {name!r}"

@@ -217,3 +217,11 @@ def test_routine_service_validation(toml: str, pattern: str) -> None:
 def test_derived_rule_is_registered() -> None:
     assert ROUTINE_SERVICE_ERRORS in DERIVED_RULES
     assert ROUTINE_SERVICE_ERRORS.severity is Severity.INFO
+
+
+def test_routine_service_name_is_stripped() -> None:
+    parsed = parse_catalog(_service_toml(name=" Interactive Services Detection "))
+    (entry,) = parsed.routine_services
+    assert entry.name == ROUTINE_NAME
+    found = routine_service_for(_rule("service-crashed"), ROUTINE_NAME, parsed.routine_services)
+    assert found is entry

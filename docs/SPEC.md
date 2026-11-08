@@ -87,7 +87,7 @@ Running `eventlens` with no arguments on Windows analyses the live System and Ap
 ```
 sources.py  ->  analyzer.py  ->  report.py
  (events)     (findings via       (text)
-               catalog.py)
+               catalog.toml)
 ```
 
 1. **Read** events from every input into `Event` objects (built).
@@ -148,7 +148,7 @@ Incidents appear in the report as one finding per type (for example "Blue screen
 
 ## 6. v1 event catalog
 
-The catalog lives in `catalog.py` as Python data. Each entry has: provider name(s), event ID, severity, optional escalation threshold, title, "what it means", "what to do", and an optional function that pulls details from the event data.
+The catalog lives in `catalog.toml`, loaded and validated by `catalog.py`. Each entry has: provider name(s), event ID, severity, optional escalation threshold, title, "what it means", "what to do", and an optional function that pulls details from the event data.
 
 | Provider | ID | Title | Severity |
 | --- | --- | --- | --- |
@@ -286,7 +286,7 @@ All times are ISO 8601 in UTC (`2026-10-06T21:02:20Z`), whatever `--utc` says. U
 | --- | --- | --- |
 | `models.py` | `Event`, `Level` | Built |
 | `sources.py` | Read `.evtx`, `.xml`, and live logs | Built |
-| `catalog.py` | Event catalog and stop codes | Built |
+| `catalog.py`, `catalog.toml` | Event catalog and stop codes (data in TOML, loader in Python) | Built |
 | `analyzer.py` | Filtering, matching, grouping, incidents, ranking | Built |
 | `report.py` | Text rendering | Built |
 | `report_markdown.py` | Markdown rendering | Built |
