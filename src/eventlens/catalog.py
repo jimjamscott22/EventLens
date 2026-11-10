@@ -4,7 +4,8 @@ Each ``Rule`` maps one or more (provider, event ID) pairs to a plain-English
 title, meaning, and next step. Crash events (Kernel-Power 41, EventLog 6008,
 and BugCheck 1001) are not rules: the analyzer combines them into incidents,
 described by the ``BLUE_SCREEN``, ``FORCED_POWER_OFF``, and ``POWER_LOSS``
-rules at the bottom of this module.
+rules in this module. The ordinary rules and the blue screen stop codes live in
+``catalog.toml``, which this module loads at import time.
 
 All text is ASCII so the report prints on any Windows console.
 """
@@ -12,9 +13,11 @@ All text is ASCII so the report prints on any Windows console.
 from __future__ import annotations
 
 import re
+import tomllib
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import IntEnum
+from importlib.resources import files
 from pathlib import PureWindowsPath
 
 from eventlens.models import Event
@@ -125,33 +128,6 @@ def _first_param(event: Event) -> str | None:
     return field(event, "param1")
 
 
-# --- Blue screen stop codes ---
-
-STOP_CODES: dict[int, tuple[str, str]] = {
-    0x0A: ("IRQL_NOT_LESS_OR_EQUAL", "usually a faulty driver"),
-    0x1A: ("MEMORY_MANAGEMENT", "often faulty RAM; run Windows Memory Diagnostic"),
-    0x3B: ("SYSTEM_SERVICE_EXCEPTION", "a driver or system file problem"),
-    0x50: ("PAGE_FAULT_IN_NONPAGED_AREA", "a faulty driver, RAM, or antivirus"),
-    0x7E: ("SYSTEM_THREAD_EXCEPTION_NOT_HANDLED", "a driver crashed"),
-    0x9F: ("DRIVER_POWER_STATE_FAILURE", "a driver failed during sleep or wake"),
-    0xD1: (
-        "DRIVER_IRQL_NOT_LESS_OR_EQUAL",
-        "a network, storage, or graphics driver crashed",
-    ),
-    0xEF: (
-        "CRITICAL_PROCESS_DIED",
-        "a core Windows process stopped; check the disk and system files",
-    ),
-    0x116: ("VIDEO_TDR_FAILURE", "a graphics driver or GPU problem"),
-    0x124: (
-        "WHEA_UNCORRECTABLE_ERROR",
-        "a hardware fault: CPU, RAM, overheating, or overclocking",
-    ),
-    0x133: ("DPC_WATCHDOG_VIOLATION", "a driver or SSD firmware hung"),
-    0x139: ("KERNEL_SECURITY_CHECK_FAILURE", "a driver, RAM, or corrupt system files"),
-}
-
-
 def parse_stop_code(value: str | None) -> int | None:
     """Normalise a stop code from either crash event into an int.
 
@@ -184,327 +160,6 @@ def describe_stop_code(code: int) -> str:
 _UPDATE_DRIVERS = (
     "Update the drivers (graphics, Wi-Fi, chipset, storage) from the PC or "
     "motherboard maker's website and install all Windows updates."
-)
-
-RULES: tuple[Rule, ...] = (
-    Rule(
-        key="whea-fatal",
-        providers=("Microsoft-Windows-WHEA-Logger",),
-        event_ids=(18,),
-        severity=Severity.CRITICAL,
-        title="Fatal processor hardware error",
-        meaning=(
-            "The processor reported an error it could not recover from. This "
-            "points to failing hardware, overheating, or unstable overclocking."
-        ),
-        action=(
-            "Undo any overclocking, check that fans and vents are clean, and "
-            "update the BIOS/UEFI. If it keeps happening, the CPU, RAM, or "
-            "motherboard may need replacing."
-        ),
-    ),
-    Rule(
-        key="whea-corrected",
-        providers=("Microsoft-Windows-WHEA-Logger",),
-        event_ids=(17, 19),
-        severity=Severity.LOW,
-        escalate=(10, Severity.HIGH),
-        title="Corrected hardware error",
-        meaning=(
-            "A hardware component (usually a PCIe device or the processor) had "
-            "an error that was fixed automatically. A few are normal; many in a "
-            "short time suggest a device is starting to fail."
-        ),
-        action=(
-            "If this appears often, update the BIOS/UEFI and chipset drivers, "
-            "and reseat or test recently added hardware."
-        ),
-    ),
-    Rule(
-        key="whea-memory",
-        providers=("Microsoft-Windows-WHEA-Logger",),
-        event_ids=(47,),
-        severity=Severity.LOW,
-        escalate=(10, Severity.HIGH),
-        title="Corrected memory error",
-        meaning=(
-            "The RAM returned bad data that was corrected automatically. "
-            "Repeated errors are an early sign of failing memory."
-        ),
-        action=(
-            "Run Windows Memory Diagnostic. If errors continue, reseat or "
-            "replace the RAM sticks."
-        ),
-    ),
-    Rule(
-        key="disk-bad-block",
-        providers=("disk",),
-        event_ids=(7,),
-        severity=Severity.CRITICAL,
-        title="Bad block on a drive",
-        meaning="Part of a drive can no longer be read reliably. Data on it is at risk.",
-        action=(
-            "Back up your files now. Then check the drive's health (for example "
-            "with CrystalDiskInfo or the maker's tool) and plan to replace it."
-        ),
-        detail=_first_param,
-        detail_label="Drive",
-    ),
-    Rule(
-        key="disk-paging-error",
-        providers=("disk",),
-        event_ids=(51,),
-        severity=Severity.HIGH,
-        title="Drive error during paging",
-        meaning=(
-            "Windows hit an error while moving memory to or from a drive. This "
-            "can mean a failing drive or a loose cable."
-        ),
-        action=(
-            "Back up your files, check the drive's health, and reseat its cable "
-            "if it's a desktop PC."
-        ),
-        detail=_first_param,
-        detail_label="Drive",
-    ),
-    Rule(
-        key="disk-retried",
-        providers=("disk",),
-        event_ids=(153,),
-        severity=Severity.MEDIUM,
-        escalate=(10, Severity.HIGH),
-        title="Drive operation had to be retried",
-        meaning=(
-            "A read or write to a drive took too long and had to be tried "
-            "again. Occasional retries happen; many suggest a drive problem."
-        ),
-        action=(
-            "Update the storage driver and drive firmware, and check the "
-            "drive's health. Back up if retries are frequent."
-        ),
-    ),
-    Rule(
-        key="ntfs-corruption",
-        providers=("Ntfs", "Microsoft-Windows-Ntfs"),
-        event_ids=(55,),
-        severity=Severity.CRITICAL,
-        title="File system corruption detected",
-        meaning="The structure of the file system on a drive is damaged.",
-        action=(
-            "Back up your files, then run 'chkdsk /f' on the affected drive "
-            "from an administrator command prompt and restart."
-        ),
-        detail=lambda e: field(e, "DriveName"),
-        detail_label="Drive",
-    ),
-    Rule(
-        key="display-reset",
-        providers=("Display",),
-        event_ids=(4101,),
-        severity=Severity.HIGH,
-        title="Display driver stopped responding and recovered",
-        meaning=(
-            "The graphics driver froze and Windows restarted it. You may have "
-            "seen the screen go black or flicker."
-        ),
-        action=(
-            "Install the latest graphics driver from NVIDIA, AMD, or Intel. If "
-            "it happens in games, check GPU temperatures and undo overclocking."
-        ),
-        detail=_first_param,
-        detail_label="Driver",
-    ),
-    Rule(
-        key="app-crash",
-        providers=("Application Error",),
-        event_ids=(1000,),
-        severity=Severity.MEDIUM,
-        escalate=(5, Severity.HIGH),
-        title="App crashed",
-        meaning="These programs closed unexpectedly.",
-        action=(
-            "Update or reinstall the app. Crashes in a graphics module such as "
-            "d3d11.dll or a GPU driver file often go away after a graphics "
-            "driver update."
-        ),
-        detail=_app_crash,
-    ),
-    Rule(
-        key="app-hang",
-        providers=("Application Hang",),
-        event_ids=(1002,),
-        severity=Severity.MEDIUM,
-        escalate=(5, Severity.HIGH),
-        title="App stopped responding",
-        meaning="These programs froze and were closed.",
-        action=(
-            "Update the app. If many different apps hang, check for a full "
-            "disk, low memory, or a failing drive."
-        ),
-        detail=_app_hang,
-    ),
-    Rule(
-        key="dotnet-crash",
-        providers=(".NET Runtime",),
-        event_ids=(1026,),
-        severity=Severity.MEDIUM,
-        escalate=(5, Severity.HIGH),
-        title=".NET app crashed with an unhandled error",
-        meaning="A program built on .NET hit an error it didn't handle and closed.",
-        action="Update or reinstall the app, and install .NET updates through Windows Update.",
-        detail=_dotnet_crash,
-    ),
-    Rule(
-        key="service-start-failed",
-        providers=("Service Control Manager",),
-        event_ids=(7000, 7009),
-        severity=Severity.MEDIUM,
-        title="Service failed to start",
-        meaning="A background service didn't start, or took too long to start.",
-        action=(
-            "If the service belongs to software you use, reinstall or update "
-            "it. If it belongs to software you've removed, it's safe to ignore."
-        ),
-        detail=_service,
-        detail_label="Services",
-    ),
-    Rule(
-        key="service-crashed",
-        providers=("Service Control Manager",),
-        event_ids=(7023, 7031, 7034),
-        severity=Severity.HIGH,
-        title="Service stopped unexpectedly",
-        meaning="A background service crashed or stopped with an error.",
-        action=(
-            "Update or reinstall the software the service belongs to. For "
-            "Windows services, install updates and run 'sfc /scannow' from an "
-            "administrator command prompt."
-        ),
-        detail=_service,
-        detail_label="Services",
-    ),
-    Rule(
-        key="update-failed",
-        providers=("Microsoft-Windows-WindowsUpdateClient",),
-        event_ids=(20,),
-        severity=Severity.MEDIUM,
-        title="Windows Update failed to install",
-        meaning="An update downloaded but could not be installed.",
-        action=(
-            "Restart and run Windows Update again. If it keeps failing, run the "
-            "Windows Update troubleshooter or search for the error code."
-        ),
-        detail=_windows_update,
-        detail_label="Updates",
-    ),
-    Rule(
-        key="low-memory",
-        providers=("Microsoft-Windows-Resource-Exhaustion-Detector",),
-        event_ids=(2004,),
-        severity=Severity.HIGH,
-        title="PC ran low on memory",
-        meaning=(
-            "Windows nearly ran out of memory, which makes apps slow, freeze, "
-            "or crash."
-        ),
-        action=(
-            "Close programs you aren't using, check Task Manager for one using "
-            "far more memory than expected, and make sure the page file is "
-            "enabled. Adding RAM helps if this happens often."
-        ),
-    ),
-    Rule(
-        key="driver-load-failed",
-        providers=("Microsoft-Windows-Kernel-PnP",),
-        event_ids=(219,),
-        severity=Severity.MEDIUM,
-        title="A driver failed to load",
-        meaning="A device driver didn't load at startup, so the device may not work.",
-        action=(
-            "Check Device Manager for devices with a warning icon and update "
-            "their drivers. If everything works, this is usually harmless."
-        ),
-        detail=lambda e: field(e, "DriverName"),
-        detail_label="Devices",
-    ),
-    Rule(
-        key="disk-full",
-        providers=("srv",),
-        event_ids=(2013,),
-        severity=Severity.MEDIUM,
-        title="A disk is nearly full",
-        meaning="A drive is at or near capacity, which can cause errors and slowdowns.",
-        action="Free up space with Disk Cleanup or Storage Sense, or move files elsewhere.",
-    ),
-    Rule(
-        key="dns-timeout",
-        providers=("Microsoft-Windows-DNS-Client",),
-        event_ids=(1014,),
-        severity=Severity.LOW,
-        title="Website name lookups timed out",
-        meaning=(
-            "The PC couldn't look up some website names in time. Brief network "
-            "drops cause this and it's usually harmless."
-        ),
-        action=(
-            "If websites often fail to load, restart your router, or try a "
-            "different DNS server."
-        ),
-        detail=lambda e: field(e, "QueryName"),
-        detail_label="Names",
-    ),
-    Rule(
-        key="cpu-throttled",
-        providers=("Microsoft-Windows-Kernel-Processor-Power",),
-        event_ids=(37,),
-        severity=Severity.MEDIUM,
-        title="Processor speed was limited by the firmware",
-        meaning=(
-            "The firmware slowed the processor down, usually because of heat "
-            "or a power limit. The PC feels slow while this happens."
-        ),
-        action=(
-            "Clean the vents and fans, make sure the PC is on a hard surface, "
-            "and use the original charger on a laptop. Update the BIOS if the "
-            "problem continues."
-        ),
-    ),
-    Rule(
-        key="sleep",
-        providers=("Microsoft-Windows-Kernel-Power",),
-        event_ids=(42, 506),
-        severity=Severity.INFO,
-        title="PC went to sleep",
-        meaning="Windows put the PC to sleep (or into connected standby).",
-    ),
-    Rule(
-        key="wake",
-        providers=("Microsoft-Windows-Kernel-Power", "Microsoft-Windows-Power-Troubleshooter"),
-        event_ids=(107, 507, 1),
-        severity=Severity.INFO,
-        title="PC woke from sleep",
-        meaning="The PC resumed from sleep.",
-    ),
-    Rule(
-        key="planned-restart",
-        providers=("User32",),
-        event_ids=(1074,),
-        severity=Severity.INFO,
-        title="Planned restart or shutdown",
-        meaning="A program or person asked Windows to restart or shut down.",
-        detail=_planned_restart,
-    ),
-    Rule(
-        key="dcom-10016",
-        providers=("Microsoft-Windows-DistributedCOM",),
-        event_ids=(10016,),
-        severity=Severity.INFO,
-        title="DCOM permission warnings (harmless, safe to ignore)",
-        meaning=(
-            "Windows components log these routinely. Microsoft says they don't "
-            "affect how the PC works."
-        ),
-    ),
 )
 
 # --- Crash incidents (see SPEC.md section 5) ---
@@ -604,7 +259,19 @@ WAKES_IMMEDIATELY = Rule(
     ),
 )
 
-DERIVED_RULES = (CRASH_WHILE_ASLEEP, WAKES_IMMEDIATELY)
+ROUTINE_SERVICE_ERRORS = Rule(
+    key="routine-service-errors",
+    providers=(),
+    event_ids=(),
+    severity=Severity.INFO,
+    title="Services that log errors routinely",
+    meaning=(
+        "These services log errors as part of normal operation. They are listed "
+        "here so they don't hide real service problems."
+    ),
+)
+
+DERIVED_RULES = (CRASH_WHILE_ASLEEP, WAKES_IMMEDIATELY, ROUTINE_SERVICE_ERRORS)
 
 
 def _build_index(rules: tuple[Rule, ...]) -> dict[tuple[str, int], Rule]:
@@ -619,7 +286,248 @@ def _build_index(rules: tuple[Rule, ...]) -> dict[tuple[str, int], Rule]:
     return index
 
 
+# --- Loading a catalog from TOML ---
+
+
+class CatalogError(ValueError):
+    """The catalog text is invalid. Messages start with the offending entry."""
+
+
+@dataclass(frozen=True)
+class RoutineService:
+    """A service whose stop or crash events are routine."""
+
+    name: str
+    reason: str
+    rules: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class Catalog:
+    rules: tuple[Rule, ...]
+    stop_codes: dict[int, tuple[str, str]]
+    routine_services: tuple[RoutineService, ...]
+
+
+EXTRACTORS: dict[str, DetailFn] = {
+    "first_param": _first_param,
+    "service": _service,
+    "app_crash": _app_crash,
+    "app_hang": _app_hang,
+    "dotnet_crash": _dotnet_crash,
+    "windows_update": _windows_update,
+    "planned_restart": _planned_restart,
+}
+
+_REQUIRED_RULE_FIELDS = ("key", "providers", "event_ids", "severity", "title", "meaning")
+_OPTIONAL_RULE_FIELDS = ("action", "escalate", "detail", "detail_label")
+_STOP_CODE_KEY = re.compile(r"0[xX][0-9A-Fa-f]+")
+
+
+def _check_ascii(label: str, value: str, what: str) -> None:
+    if not value.isascii():
+        raise CatalogError(f"{label}: {what} must be ASCII")
+
+
+def _severity(label: str, value: object, what: str = "severity") -> Severity:
+    if not isinstance(value, str) or value.upper() not in Severity.__members__:
+        names = ", ".join(n.lower() for n in Severity.__members__)
+        raise CatalogError(f"{label}: {what} must be one of {names}, got {value!r}")
+    return Severity[value.upper()]
+
+
+def _text(label: str, table: dict, name: str, default: str | None = None) -> str:
+    value = table.get(name, default)
+    if not isinstance(value, str):
+        raise CatalogError(f"{label}: {name} must be a string")
+    _check_ascii(label, value, name)
+    return value
+
+
+def _detail(label: str, value: object) -> DetailFn | None:
+    if value is None:
+        return None
+    if isinstance(value, str):
+        if value not in EXTRACTORS:
+            known = ", ".join(sorted(EXTRACTORS))
+            raise CatalogError(f"{label}: unknown detail extractor {value!r} (known: {known})")
+        return EXTRACTORS[value]
+    if isinstance(value, dict) and set(value) == {"field"}:
+        names = value["field"]
+        if (
+            not isinstance(names, list)
+            or not names
+            or not all(isinstance(n, str) and n for n in names)
+        ):
+            raise CatalogError(f"{label}: detail field must be a non-empty list of names")
+        for name in names:
+            _check_ascii(label, name, "detail field name")
+        field_names = tuple(names)
+        return lambda event: field(event, *field_names)
+    raise CatalogError(f"{label}: detail must be an extractor name or {{ field = [names] }}")
+
+
+def _parse_rule(index: int, table: object) -> Rule:
+    if not isinstance(table, dict):
+        raise CatalogError(f"rule #{index + 1}: must be a table")
+    raw_key = table.get("key")
+    label = f"rule {raw_key!r}" if isinstance(raw_key, str) else f"rule #{index + 1}"
+    for name in _REQUIRED_RULE_FIELDS:
+        if name not in table:
+            raise CatalogError(f"{label}: missing required field {name}")
+    unknown = sorted(set(table) - set(_REQUIRED_RULE_FIELDS) - set(_OPTIONAL_RULE_FIELDS))
+    if unknown:
+        raise CatalogError(f"{label}: unknown field {', '.join(unknown)}")
+
+    key = _text(label, table, "key")
+    providers = table["providers"]
+    if not isinstance(providers, list) or not all(isinstance(p, str) for p in providers):
+        raise CatalogError(f"{label}: providers must be a list of strings")
+    for provider in providers:
+        _check_ascii(label, provider, "providers")
+    event_ids = table["event_ids"]
+    if not isinstance(event_ids, list) or not all(
+        isinstance(i, int) and not isinstance(i, bool) for i in event_ids
+    ):
+        raise CatalogError(f"{label}: event_ids must be a list of integers")
+    severity = _severity(label, table["severity"])
+
+    escalate = None
+    if "escalate" in table:
+        spec = table["escalate"]
+        if not isinstance(spec, dict) or set(spec) != {"count", "severity"}:
+            raise CatalogError(f"{label}: escalate must be {{ count, severity }}")
+        count = spec["count"]
+        if not isinstance(count, int) or isinstance(count, bool) or count < 2:
+            raise CatalogError(f"{label}: escalate count must be an integer of at least 2")
+        target = _severity(label, spec["severity"], "escalate severity")
+        if target <= severity:
+            raise CatalogError(f"{label}: escalate severity must be above the rule's severity")
+        escalate = (count, target)
+
+    return Rule(
+        key=key,
+        providers=tuple(providers),
+        event_ids=tuple(event_ids),
+        severity=severity,
+        title=_text(label, table, "title"),
+        meaning=_text(label, table, "meaning"),
+        action=_text(label, table, "action", ""),
+        escalate=escalate,
+        detail=_detail(label, table.get("detail")),
+        detail_label=_text(label, table, "detail_label", "Details"),
+    )
+
+
+def _parse_stop_codes(table: object) -> dict[int, tuple[str, str]]:
+    if not isinstance(table, dict):
+        raise CatalogError("stop_codes: must be a table")
+    codes: dict[int, tuple[str, str]] = {}
+    for raw, entry in table.items():
+        label = f"stop code {raw!r}"
+        if not _STOP_CODE_KEY.fullmatch(raw):
+            raise CatalogError(f"{label}: key must be hex like 0x0A")
+        code = int(raw, 16)
+        if code in codes:
+            raise CatalogError(f"{label}: Duplicate stop code 0x{code:X}")
+        if not isinstance(entry, dict) or set(entry) != {"name", "hint"}:
+            raise CatalogError(f"{label}: must be {{ name, hint }}")
+        codes[code] = (_text(label, entry, "name"), _text(label, entry, "hint"))
+    return codes
+
+
+_DEFAULT_SERVICE_RULES = ("service-start-failed", "service-crashed")
+
+
+def _parse_routine_services(raw: object, rule_keys: set[str]) -> tuple[RoutineService, ...]:
+    if not isinstance(raw, list) or not all(isinstance(t, dict) for t in raw):
+        raise CatalogError("catalog: routine_service must be an array of tables")
+    services: list[RoutineService] = []
+    for i, table in enumerate(raw):
+        name = table.get("name")
+        if isinstance(name, str):
+            name = name.strip()
+        if not isinstance(name, str) or not name:
+            raise CatalogError(f"routine_service #{i + 1}: name must be a non-empty string")
+        label = f"routine_service {name!r}"
+        _check_ascii(label, name, "name")
+        unknown = sorted(set(table) - {"name", "reason", "rules"})
+        if unknown:
+            raise CatalogError(f"{label}: unknown field {', '.join(unknown)}")
+        if "reason" not in table:
+            raise CatalogError(f"{label}: missing required field reason")
+        reason = _text(label, table, "reason")
+        rules = _DEFAULT_SERVICE_RULES
+        if "rules" in table:
+            listed = table["rules"]
+            if (
+                not isinstance(listed, list)
+                or not listed
+                or not all(isinstance(k, str) for k in listed)
+            ):
+                raise CatalogError(f"{label}: rules must be a non-empty list of rule keys")
+            for key in listed:
+                if key not in rule_keys:
+                    raise CatalogError(f"{label}: unknown rule {key!r}")
+            rules = tuple(listed)
+        services.append(RoutineService(name=name, reason=reason, rules=rules))
+    return tuple(services)
+
+
+def parse_catalog(text: str) -> Catalog:
+    """Parse and validate catalog TOML. Raises ``CatalogError`` naming the bad entry."""
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        raise CatalogError(f"catalog: invalid TOML: {exc}") from exc
+    unknown = sorted(set(data) - {"rule", "stop_codes", "routine_service"})
+    if unknown:
+        raise CatalogError(f"catalog: unknown top-level key {', '.join(unknown)}")
+    raw_rules = data.get("rule", [])
+    if not isinstance(raw_rules, list):
+        raise CatalogError("catalog: rule must be an array of tables")
+
+    rules: list[Rule] = []
+    seen_keys: set[str] = set()
+    for i, raw in enumerate(raw_rules):
+        rule = _parse_rule(i, raw)
+        label = f"rule {rule.key!r}"
+        if rule.key in seen_keys:
+            raise CatalogError(f"{label}: Duplicate key")
+        seen_keys.add(rule.key)
+        rules.append(rule)
+        try:
+            _build_index(tuple(rules))
+        except ValueError as exc:
+            raise CatalogError(f"{label}: {exc}") from exc
+
+    return Catalog(
+        rules=tuple(rules),
+        stop_codes=_parse_stop_codes(data.get("stop_codes", {})),
+        routine_services=_parse_routine_services(data.get("routine_service", []), seen_keys),
+    )
+
+
+_CATALOG = parse_catalog(files("eventlens").joinpath("catalog.toml").read_text(encoding="utf-8"))
+RULES: tuple[Rule, ...] = _CATALOG.rules
+STOP_CODES: dict[int, tuple[str, str]] = _CATALOG.stop_codes
+ROUTINE_SERVICES: tuple[RoutineService, ...] = _CATALOG.routine_services
 _INDEX = _build_index(RULES)
+
+
+def routine_service_for(
+    rule: Rule,
+    detail: str | None,
+    services: tuple[RoutineService, ...] = ROUTINE_SERVICES,
+) -> RoutineService | None:
+    """Return the routine-service entry for a service event, or None."""
+    if detail is None:
+        return None
+    wanted = detail.strip().casefold()
+    for service in services:
+        if rule.key in service.rules and service.name.casefold() == wanted:
+            return service
+    return None
 
 
 def event_key(event: Event) -> tuple[str, int]:

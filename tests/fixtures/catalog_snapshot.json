@@ -1,0 +1,449 @@
+{
+  "rules": [
+    {
+      "key": "whea-fatal",
+      "providers": [
+        "Microsoft-Windows-WHEA-Logger"
+      ],
+      "event_ids": [
+        18
+      ],
+      "severity": "critical",
+      "escalate": null,
+      "title": "Fatal processor hardware error",
+      "meaning": "The processor reported an error it could not recover from. This points to failing hardware, overheating, or unstable overclocking.",
+      "action": "Undo any overclocking, check that fans and vents are clean, and update the BIOS/UEFI. If it keeps happening, the CPU, RAM, or motherboard may need replacing.",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "whea-corrected",
+      "providers": [
+        "Microsoft-Windows-WHEA-Logger"
+      ],
+      "event_ids": [
+        17,
+        19
+      ],
+      "severity": "low",
+      "escalate": [
+        10,
+        "high"
+      ],
+      "title": "Corrected hardware error",
+      "meaning": "A hardware component (usually a PCIe device or the processor) had an error that was fixed automatically. A few are normal; many in a short time suggest a device is starting to fail.",
+      "action": "If this appears often, update the BIOS/UEFI and chipset drivers, and reseat or test recently added hardware.",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "whea-memory",
+      "providers": [
+        "Microsoft-Windows-WHEA-Logger"
+      ],
+      "event_ids": [
+        47
+      ],
+      "severity": "low",
+      "escalate": [
+        10,
+        "high"
+      ],
+      "title": "Corrected memory error",
+      "meaning": "The RAM returned bad data that was corrected automatically. Repeated errors are an early sign of failing memory.",
+      "action": "Run Windows Memory Diagnostic. If errors continue, reseat or replace the RAM sticks.",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "disk-bad-block",
+      "providers": [
+        "disk"
+      ],
+      "event_ids": [
+        7
+      ],
+      "severity": "critical",
+      "escalate": null,
+      "title": "Bad block on a drive",
+      "meaning": "Part of a drive can no longer be read reliably. Data on it is at risk.",
+      "action": "Back up your files now. Then check the drive's health (for example with CrystalDiskInfo or the maker's tool) and plan to replace it.",
+      "detail_label": "Drive",
+      "has_detail": true
+    },
+    {
+      "key": "disk-paging-error",
+      "providers": [
+        "disk"
+      ],
+      "event_ids": [
+        51
+      ],
+      "severity": "high",
+      "escalate": null,
+      "title": "Drive error during paging",
+      "meaning": "Windows hit an error while moving memory to or from a drive. This can mean a failing drive or a loose cable.",
+      "action": "Back up your files, check the drive's health, and reseat its cable if it's a desktop PC.",
+      "detail_label": "Drive",
+      "has_detail": true
+    },
+    {
+      "key": "disk-retried",
+      "providers": [
+        "disk"
+      ],
+      "event_ids": [
+        153
+      ],
+      "severity": "medium",
+      "escalate": [
+        10,
+        "high"
+      ],
+      "title": "Drive operation had to be retried",
+      "meaning": "A read or write to a drive took too long and had to be tried again. Occasional retries happen; many suggest a drive problem.",
+      "action": "Update the storage driver and drive firmware, and check the drive's health. Back up if retries are frequent.",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "ntfs-corruption",
+      "providers": [
+        "Ntfs",
+        "Microsoft-Windows-Ntfs"
+      ],
+      "event_ids": [
+        55
+      ],
+      "severity": "critical",
+      "escalate": null,
+      "title": "File system corruption detected",
+      "meaning": "The structure of the file system on a drive is damaged.",
+      "action": "Back up your files, then run 'chkdsk /f' on the affected drive from an administrator command prompt and restart.",
+      "detail_label": "Drive",
+      "has_detail": true
+    },
+    {
+      "key": "display-reset",
+      "providers": [
+        "Display"
+      ],
+      "event_ids": [
+        4101
+      ],
+      "severity": "high",
+      "escalate": null,
+      "title": "Display driver stopped responding and recovered",
+      "meaning": "The graphics driver froze and Windows restarted it. You may have seen the screen go black or flicker.",
+      "action": "Install the latest graphics driver from NVIDIA, AMD, or Intel. If it happens in games, check GPU temperatures and undo overclocking.",
+      "detail_label": "Driver",
+      "has_detail": true
+    },
+    {
+      "key": "app-crash",
+      "providers": [
+        "Application Error"
+      ],
+      "event_ids": [
+        1000
+      ],
+      "severity": "medium",
+      "escalate": [
+        5,
+        "high"
+      ],
+      "title": "App crashed",
+      "meaning": "These programs closed unexpectedly.",
+      "action": "Update or reinstall the app. Crashes in a graphics module such as d3d11.dll or a GPU driver file often go away after a graphics driver update.",
+      "detail_label": "Details",
+      "has_detail": true
+    },
+    {
+      "key": "app-hang",
+      "providers": [
+        "Application Hang"
+      ],
+      "event_ids": [
+        1002
+      ],
+      "severity": "medium",
+      "escalate": [
+        5,
+        "high"
+      ],
+      "title": "App stopped responding",
+      "meaning": "These programs froze and were closed.",
+      "action": "Update the app. If many different apps hang, check for a full disk, low memory, or a failing drive.",
+      "detail_label": "Details",
+      "has_detail": true
+    },
+    {
+      "key": "dotnet-crash",
+      "providers": [
+        ".NET Runtime"
+      ],
+      "event_ids": [
+        1026
+      ],
+      "severity": "medium",
+      "escalate": [
+        5,
+        "high"
+      ],
+      "title": ".NET app crashed with an unhandled error",
+      "meaning": "A program built on .NET hit an error it didn't handle and closed.",
+      "action": "Update or reinstall the app, and install .NET updates through Windows Update.",
+      "detail_label": "Details",
+      "has_detail": true
+    },
+    {
+      "key": "service-start-failed",
+      "providers": [
+        "Service Control Manager"
+      ],
+      "event_ids": [
+        7000,
+        7009
+      ],
+      "severity": "medium",
+      "escalate": null,
+      "title": "Service failed to start",
+      "meaning": "A background service didn't start, or took too long to start.",
+      "action": "If the service belongs to software you use, reinstall or update it. If it belongs to software you've removed, it's safe to ignore.",
+      "detail_label": "Services",
+      "has_detail": true
+    },
+    {
+      "key": "service-crashed",
+      "providers": [
+        "Service Control Manager"
+      ],
+      "event_ids": [
+        7023,
+        7031,
+        7034
+      ],
+      "severity": "high",
+      "escalate": null,
+      "title": "Service stopped unexpectedly",
+      "meaning": "A background service crashed or stopped with an error.",
+      "action": "Update or reinstall the software the service belongs to. For Windows services, install updates and run 'sfc /scannow' from an administrator command prompt.",
+      "detail_label": "Services",
+      "has_detail": true
+    },
+    {
+      "key": "update-failed",
+      "providers": [
+        "Microsoft-Windows-WindowsUpdateClient"
+      ],
+      "event_ids": [
+        20
+      ],
+      "severity": "medium",
+      "escalate": null,
+      "title": "Windows Update failed to install",
+      "meaning": "An update downloaded but could not be installed.",
+      "action": "Restart and run Windows Update again. If it keeps failing, run the Windows Update troubleshooter or search for the error code.",
+      "detail_label": "Updates",
+      "has_detail": true
+    },
+    {
+      "key": "low-memory",
+      "providers": [
+        "Microsoft-Windows-Resource-Exhaustion-Detector"
+      ],
+      "event_ids": [
+        2004
+      ],
+      "severity": "high",
+      "escalate": null,
+      "title": "PC ran low on memory",
+      "meaning": "Windows nearly ran out of memory, which makes apps slow, freeze, or crash.",
+      "action": "Close programs you aren't using, check Task Manager for one using far more memory than expected, and make sure the page file is enabled. Adding RAM helps if this happens often.",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "driver-load-failed",
+      "providers": [
+        "Microsoft-Windows-Kernel-PnP"
+      ],
+      "event_ids": [
+        219
+      ],
+      "severity": "medium",
+      "escalate": null,
+      "title": "A driver failed to load",
+      "meaning": "A device driver didn't load at startup, so the device may not work.",
+      "action": "Check Device Manager for devices with a warning icon and update their drivers. If everything works, this is usually harmless.",
+      "detail_label": "Devices",
+      "has_detail": true
+    },
+    {
+      "key": "disk-full",
+      "providers": [
+        "srv"
+      ],
+      "event_ids": [
+        2013
+      ],
+      "severity": "medium",
+      "escalate": null,
+      "title": "A disk is nearly full",
+      "meaning": "A drive is at or near capacity, which can cause errors and slowdowns.",
+      "action": "Free up space with Disk Cleanup or Storage Sense, or move files elsewhere.",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "dns-timeout",
+      "providers": [
+        "Microsoft-Windows-DNS-Client"
+      ],
+      "event_ids": [
+        1014
+      ],
+      "severity": "low",
+      "escalate": null,
+      "title": "Website name lookups timed out",
+      "meaning": "The PC couldn't look up some website names in time. Brief network drops cause this and it's usually harmless.",
+      "action": "If websites often fail to load, restart your router, or try a different DNS server.",
+      "detail_label": "Names",
+      "has_detail": true
+    },
+    {
+      "key": "cpu-throttled",
+      "providers": [
+        "Microsoft-Windows-Kernel-Processor-Power"
+      ],
+      "event_ids": [
+        37
+      ],
+      "severity": "medium",
+      "escalate": null,
+      "title": "Processor speed was limited by the firmware",
+      "meaning": "The firmware slowed the processor down, usually because of heat or a power limit. The PC feels slow while this happens.",
+      "action": "Clean the vents and fans, make sure the PC is on a hard surface, and use the original charger on a laptop. Update the BIOS if the problem continues.",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "sleep",
+      "providers": [
+        "Microsoft-Windows-Kernel-Power"
+      ],
+      "event_ids": [
+        42,
+        506
+      ],
+      "severity": "info",
+      "escalate": null,
+      "title": "PC went to sleep",
+      "meaning": "Windows put the PC to sleep (or into connected standby).",
+      "action": "",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "wake",
+      "providers": [
+        "Microsoft-Windows-Kernel-Power",
+        "Microsoft-Windows-Power-Troubleshooter"
+      ],
+      "event_ids": [
+        107,
+        507,
+        1
+      ],
+      "severity": "info",
+      "escalate": null,
+      "title": "PC woke from sleep",
+      "meaning": "The PC resumed from sleep.",
+      "action": "",
+      "detail_label": "Details",
+      "has_detail": false
+    },
+    {
+      "key": "planned-restart",
+      "providers": [
+        "User32"
+      ],
+      "event_ids": [
+        1074
+      ],
+      "severity": "info",
+      "escalate": null,
+      "title": "Planned restart or shutdown",
+      "meaning": "A program or person asked Windows to restart or shut down.",
+      "action": "",
+      "detail_label": "Details",
+      "has_detail": true
+    },
+    {
+      "key": "dcom-10016",
+      "providers": [
+        "Microsoft-Windows-DistributedCOM"
+      ],
+      "event_ids": [
+        10016
+      ],
+      "severity": "info",
+      "escalate": null,
+      "title": "DCOM permission warnings (harmless, safe to ignore)",
+      "meaning": "Windows components log these routinely. Microsoft says they don't affect how the PC works.",
+      "action": "",
+      "detail_label": "Details",
+      "has_detail": false
+    }
+  ],
+  "stop_codes": {
+    "0xA": [
+      "IRQL_NOT_LESS_OR_EQUAL",
+      "usually a faulty driver"
+    ],
+    "0x1A": [
+      "MEMORY_MANAGEMENT",
+      "often faulty RAM; run Windows Memory Diagnostic"
+    ],
+    "0x3B": [
+      "SYSTEM_SERVICE_EXCEPTION",
+      "a driver or system file problem"
+    ],
+    "0x50": [
+      "PAGE_FAULT_IN_NONPAGED_AREA",
+      "a faulty driver, RAM, or antivirus"
+    ],
+    "0x7E": [
+      "SYSTEM_THREAD_EXCEPTION_NOT_HANDLED",
+      "a driver crashed"
+    ],
+    "0x9F": [
+      "DRIVER_POWER_STATE_FAILURE",
+      "a driver failed during sleep or wake"
+    ],
+    "0xD1": [
+      "DRIVER_IRQL_NOT_LESS_OR_EQUAL",
+      "a network, storage, or graphics driver crashed"
+    ],
+    "0xEF": [
+      "CRITICAL_PROCESS_DIED",
+      "a core Windows process stopped; check the disk and system files"
+    ],
+    "0x116": [
+      "VIDEO_TDR_FAILURE",
+      "a graphics driver or GPU problem"
+    ],
+    "0x124": [
+      "WHEA_UNCORRECTABLE_ERROR",
+      "a hardware fault: CPU, RAM, overheating, or overclocking"
+    ],
+    "0x133": [
+      "DPC_WATCHDOG_VIOLATION",
+      "a driver or SSD firmware hung"
+    ],
+    "0x139": [
+      "KERNEL_SECURITY_CHECK_FAILURE",
+      "a driver, RAM, or corrupt system files"
+    ]
+  }
+}

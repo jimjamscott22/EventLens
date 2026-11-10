@@ -16,6 +16,7 @@ from eventlens.catalog import (
     INCIDENT_RULES,
     KERNEL_POWER_41,
     POWER_LOSS,
+    ROUTINE_SERVICE_ERRORS,
     WAKES_IMMEDIATELY,
     Rule,
     Severity,
@@ -23,6 +24,7 @@ from eventlens.catalog import (
     event_key,
     lookup,
     parse_stop_code,
+    routine_service_for,
 )
 from eventlens.catalog import (
     field as data_field,
@@ -284,7 +286,13 @@ def analyze(
         rule = lookup(event)
         if rule is not None:
             detail = rule.detail(event) if rule.detail else None
-            finding_for(rule).add(event.time, detail, event)
+            routine = routine_service_for(rule, detail)
+            if routine is not None:
+                finding_for(ROUTINE_SERVICE_ERRORS).add(
+                    event.time, f"{routine.name}: {routine.reason}", event
+                )
+            else:
+                finding_for(rule).add(event.time, detail, event)
         elif event.level in shown_levels:
             key = event_key(event)
             group = unrecognised.get(key)

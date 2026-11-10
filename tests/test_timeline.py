@@ -171,3 +171,42 @@ def test_quick_successive_reboots_each_get_their_own_incident(make_event):
     assert first.crash_title == "Sudden power loss or hard freeze"
     assert second.crash_title == "Blue screen crash"
     assert third.ended_by == "open"
+
+
+SCM = "Service Control Manager"
+
+
+def _crash_run(make_event, lead_events):
+    events = [
+        *boot(make_event, 0),
+        *lead_events,
+        *boot(make_event, 100),
+        make_event(KP, 41, minutes=100.2, level=Level.CRITICAL, data={"BugcheckCode": "159"}),
+    ]
+    return build_timeline(events).runs[0]
+
+
+def test_routine_service_events_are_left_out_of_the_lead_up(make_event):
+    isd = {"param1": "Interactive Services Detection"}
+    run = _crash_run(
+        make_event,
+        [
+            make_event(SCM, 7034, minutes=96, data=isd),
+            make_event(SCM, 7034, minutes=97, data=isd),
+            make_event("disk", 7, minutes=98),
+        ],
+    )
+    assert run.lead_up == [("Bad block on a drive", 1)]
+
+
+def test_only_routine_service_events_leave_no_lead_up(make_event):
+    isd = {"param1": "Interactive Services Detection"}
+    run = _crash_run(make_event, [make_event(SCM, 7034, minutes=97, data=isd)])
+    assert run.lead_up == []
+
+
+def test_other_service_events_stay_in_the_lead_up(make_event):
+    run = _crash_run(
+        make_event, [make_event(SCM, 7034, minutes=97, data={"param1": "Print Spooler"})]
+    )
+    assert run.lead_up == [("Service stopped unexpectedly", 1)]
